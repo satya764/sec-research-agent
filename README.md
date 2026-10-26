@@ -2,136 +2,142 @@
 
 Ask a question about a public company. Get an answer built from its 10-K and 10-Q filings, with every number and claim cited.
 
-> Status: in progress. Building in public, Oct 2026 – Jan 2027.
+> Status: code complete, being tested on real filings. Oct 2026 – Jan 2027.
 
 ## What it does
 
-- Parses a question into structured fields: company, metric, period, question type
+- Parses a question into structured fields: companies, metric, fiscal years, question type
 - Searches the narrative sections of filings (Item 1 Business, 1A Risk Factors, 7 MD&A) with hybrid search + reranking
 - Pulls numbers from the SEC EDGAR Company Facts API (XBRL), never from model memory
 - Does math with a calculator tool, not in the model's head
-- Cites the filing and section for every claim
-- Answers "not found in filings" instead of guessing
+- Cites the filing and section for every claim, and flags citations it never retrieved
+- Answers "Not found in filings." instead of guessing
+- Routes simple questions to a cheap model, hard ones to a strong model, with a fallback model on API errors
+- Redacts personal data and blocks prompt injection before anything reaches a model
 - Exposes its tools as an MCP server
-- Routes simple questions to a cheap model, hard ones to a strong model
+- Same agent in two versions: a plain tool-use loop and a LangGraph state machine
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    Q[Question] --> P[Parse question]
-    P --> A{Agent}
-    A -->|narrative| R[Hybrid search + rerank<br/>pgvector + BM25]
+    Q[Question] --> G[Guardrails<br/>PII, injection]
+    G --> P[Parse question<br/>cheap model]
+    P --> R{Router}
+    R --> A[Agent loop]
+    A -->|narrative| S[Hybrid search + rerank<br/>pgvector + Postgres full-text]
     A -->|numbers| X[EDGAR Company Facts<br/>XBRL]
     A -->|math| C[Calculator]
-    R --> A
+    S --> A
     X --> A
     C --> A
-    A --> ANS[Answer + citations]
+    A --> ANS[Answer + citations<br/>cost, latency]
     A -->|nothing found| NF[Not found in filings]
 ```
 
 ## Results
 
-Measured on a hand-verified set of 50+ questions. Filled in as evals run.
+Measured on a hand-verified golden set (`evals/golden.jsonl`). Filled in as evals run.
 
-| Metric | Baseline | Current |
-| --- | --- | --- |
-| Retrieval recall@5 | – | – |
-| Answer accuracy | – | – |
-| Citation correctness | – | – |
-| Refusal accuracy | – | – |
-| Cost per question | – | – |
-| p95 latency | – | – |
+| Metric | vector only | hybrid | hybrid + rerank |
+| --- | --- | --- | --- |
+| Retrieval recall@5 | – | – | – |
+| Retrieval MRR | – | – | – |
+| Answer accuracy | – | – | – |
+| Citation correctness | – | – | – |
+| Refusal accuracy | – | – | – |
+| Cost per question | – | – | – |
+| p95 latency | – | – | – |
 
 ## Stack
 
-Python · FastAPI · Postgres + pgvector · Claude + a cheaper model · Cohere/bge reranker · LangGraph · Arize Phoenix · Docker · AWS · Streamlit
-
-## Data
-
-- Filings text: [SEC EDGAR](https://www.sec.gov/edgar/search/)
-- Financial facts: [Company Facts API](https://www.sec.gov/search-filings/edgar-application-programming-interfaces), e.g. `https://data.sec.gov/api/xbrl/companyfacts/CIK0000320193.json`
-
-SEC requires a `User-Agent` header with your name and email, and allows up to 10 requests per second.
+Python 3.13 · FastAPI · Postgres + pgvector · Claude Haiku/Sonnet · OpenAI embeddings · Cohere rerank · LangGraph · MCP · Arize Phoenix · Docker · Streamlit · GitHub Actions
 
 ## Run it
 
-Works from milestone 3 onward.
+You need: [uv](https://docs.astral.sh/uv/), Docker, an Anthropic API key, an OpenAI API key (embeddings). Cohere is optional.
 
 ```bash
-git clone https://github.com/satya764/sec-research-agent.git
-cd sec-research-agent
-cp .env.example .env        # add your API keys and SEC user agent
-uv sync
-docker compose up
-uv run pytest
+cp .env.example .env          # fill in keys and SEC_USER_AGENT
+uv sync --all-extras          # installs everything, updates uv.lock
+uv run pytest                 # unit tests, no keys needed
+
+# 1. Numbers only (no database needed)
+uv run sec-agent facts AAPL revenue
+
+# 2. Database + filings
+docker compose up -d db
+uv run sec-agent ingest AAPL MSFT NVDA --limit 2 -v
+uv run sec-agent stats
+uv run sec-agent search "supplier concentration risk" --company AAPL
+
+# 3. Ask
+uv run sec-agent ask "How much did Apple's revenue change from fiscal 2023 to 2024?"
+uv run sec-agent ask "What are Microsoft's main risk factors around AI?" --graph
+
+# 4. API + UI
+uv run sec-agent serve                 # http://localhost:8000/docs
+uv run streamlit run app/ui.py         # http://localhost:8501
+
+# 5. MCP server (for Claude Desktop or any MCP client)
+uv run sec-agent mcp
 ```
 
-## Build log
+Or run the API and database together: `docker compose up --build`.
 
-Each milestone ships something that works and teaches the skill it needs.
+## Evals
 
-### Milestone 1 · Fetch company facts (week 1–2)
-- [ ] CLI: `uv run facts AAPL Revenues` prints revenue by fiscal year
-- [ ] Pydantic models for the API response
-- [ ] SEC user agent read from `.env`
-- [ ] Errors logged, saved to JSON, 3+ tests passing
+```bash
+uv run sec-agent candidates AAPL MSFT NVDA          # drafts numeric questions from XBRL
+# open evals/candidates.jsonl, check each number against the filing,
+# set "verified": true, and copy the rows into evals/golden.jsonl
+uv run sec-agent eval --mode vector
+uv run sec-agent eval --mode hybrid
+uv run sec-agent eval --mode hybrid_rerank
+```
 
-Learn: Python basics, `httpx`, JSON, Pydantic, pytest, `.env`, logging
+Only verified rows count. Results go to `evals/results/`. The Evals workflow runs on pull requests and fails below 80% accuracy.
 
-### Milestone 2 · Parse questions with an LLM (week 2)
-- [ ] Question → `{company, metric, period, type}` as typed JSON
-- [ ] Streaming response, retries, token and cost count per call
-- [ ] Same prompt run on 3 models, cost compared
+## Project layout
 
-Learn: LLM APIs, structured output, tool calling, prompting, token math
-
-### Milestone 3 · Backend and data (week 3)
-- [ ] FastAPI + Postgres in Docker, CI green
-- [ ] Narrative sections chunked, embedded, stored in pgvector
-- [ ] XBRL facts loaded into a Postgres table for 5+ companies
-
-Learn: async, FastAPI, Docker, SQL, embeddings
-
-### Milestone 4 · Retrieval (week 4)
-- [ ] `/ask` endpoint with hybrid search, metadata filters, reranking
-- [ ] Citations on every answer, refusal when nothing relevant
-
-Learn: BM25, HNSW indexes, reranking, RAG
-
-### Milestone 5 · Evals (week 5)
-- [ ] 50+ questions with hand-verified answers
-- [ ] Scorecard: vector-only vs hybrid + rerank
-- [ ] Evals run in CI on every PR
-
-Learn: golden datasets, recall@k, MRR, LLM-as-judge
-
-### Milestone 6 · Agent (week 6)
-- [ ] Own tool-use loop: search, facts, calculator, compare
-- [ ] Memory, max steps, guardrails, prompt-injection and PII checks
-
-Learn: agent loops, tool design, guardrails
-
-### Milestone 7 · MCP + LangGraph (week 7)
-- [ ] Tools exposed as an MCP server
-- [ ] Agent ported to LangGraph, compared with the raw loop
-
-Learn: MCP, LangGraph, multi-agent patterns
-
-### Milestone 8 · Ship (week 8)
-- [ ] Live on AWS with a Streamlit UI
-- [ ] Phoenix tracing, cost and latency per request
-- [ ] Model router, caching, fallback model
-
-Learn: deployment, observability, cost control
+```
+src/sec_research_agent/
+  sec_client.py   EDGAR: ticker lookup, company facts, filing lists, documents (rate limited, cached)
+  facts.py        clean annual/quarterly series out of XBRL facts
+  filings.py      HTML to text, find Items 1, 1A, 7 (skips the table of contents)
+  chunking.py     paragraph -> sentence -> hard-cut chunking with overlap
+  embeddings.py   OpenAI embeddings, plus a hash embedder for tests
+  db.py           pgvector store: vector search, full-text search, metadata filters
+  retrieval.py    vector / keyword / hybrid (RRF) / hybrid + Cohere rerank
+  llm.py          Anthropic wrapper: cost per call, fallback model, structured output
+  router.py       cheap vs strong model
+  guardrails.py   PII redaction, prompt injection checks
+  tools.py        search_filings, get_financial_data, calculator, final_answer
+  agent.py        plain tool-use loop
+  graph_agent.py  same agent as a LangGraph graph
+  api.py          FastAPI: /ask, /facts, rate limit, answer cache, session memory
+  mcp_server.py   MCP tools
+  evals.py        golden-set evals and candidate generation
+  tracing.py      Phoenix tracing (optional)
+app/ui.py         Streamlit chat UI
+evals/            golden set and results
+docs/deploy.md    AWS deployment
+```
 
 ## Decisions
 
 | Decision | Why | Alternatives considered |
 | --- | --- | --- |
-| Numbers from XBRL, not from chunks | Tables split across chunks break the numbers | Parse HTML tables |
-| | | |
+| Numbers from XBRL, never from text chunks | Financial tables get split across chunks; XBRL values are exact and tagged | Parse HTML tables |
+| Drop numeric tables during ingestion | Keeps chunks narrative; numbers have one source | Keep tables as text |
+| Only Items 1, 1A, 7 (10-K) and MD&A / risk factors (10-Q) | These answer descriptive questions; the rest is boilerplate or numbers | Whole filing |
+| Longest span per item heading | Every item also appears in the table of contents | First match, regex on TOC page numbers |
+| Hybrid search with reciprocal rank fusion | Vector search misses exact terms (product names, "Item 1A"); keyword misses paraphrases | Vector only |
+| Postgres for vectors and keywords | One database, metadata filters in SQL | Pinecone, Chroma, Elasticsearch |
+| `final_answer` as a tool with citation ids | Citations are structured and checkable; unknown ids are flagged | Free-text answers with inline citations |
+| `tool_choice: any` | The model must act through tools every turn, so it can't answer from memory | Let the model reply in text |
+| Haiku for lookups, Sonnet for multi-step | Most questions are single lookups | One model for everything |
+| Plain loop first, LangGraph second | Shows what the framework adds | Start with a framework |
 
 ## What didn't work
 

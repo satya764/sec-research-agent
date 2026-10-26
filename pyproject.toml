@@ -1,19 +1,47 @@
 [project]
 name = "sec-research-agent"
 version = "0.1.0"
-description = "Add your description here"
+description = "AI agent that answers questions from SEC filings with cited sources"
 readme = "README.md"
 authors = [
     { name = "Satya", email = "satyateja619@gmail.com" }
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "anthropic>=0.40",
+    "beautifulsoup4>=4.12",
+    "fastapi>=0.115",
     "httpx>=0.28.1",
+    "numpy>=2.0",
+    "pgvector>=0.3",
+    "psycopg[binary]>=3.2",
+    "pydantic>=2.9",
+    "uvicorn[standard]>=0.30",
 ]
 
+[project.optional-dependencies]
+mcp = ["mcp>=1.2"]
+graph = ["langgraph>=0.2"]
+ui = ["streamlit>=1.40"]
+tracing = ["arize-phoenix-otel>=0.6", "openinference-instrumentation-anthropic>=0.1"]
+
 [project.scripts]
-sec-research-agent = "sec_research_agent:main"
+sec-agent = "sec_research_agent.cli:main"
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6"]
 
 [build-system]
 requires = ["uv_build>=0.13.1,<0.14.0"]
 build-backend = "uv_build"
+
+[tool.ruff]
+line-length = 110
+target-version = "py313"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+ignore = ["E501", "B008"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

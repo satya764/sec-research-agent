@@ -1,0 +1,57 @@
+name: Evals
+
+# Runs the golden set against a fresh database. Costs API credits, so it runs on
+# pull requests that touch the agent or retrieval, and on demand.
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "src/**"
+      - "evals/golden.jsonl"
+
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    services:
+      db:
+        image: pgvector/pgvector:pg17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: sec_agent
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
+      SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sec_agent
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip without API keys
+        id: keys
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
+            echo "run=false" >> "$GITHUB_OUTPUT"; echo "No API keys in repo secrets, skipping."
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - uses: astral-sh/setup-uv@v6
+        if: steps.keys.outputs.run == 'true'
+      - if: steps.keys.outputs.run == 'true'
+        run: uv sync
+      - name: Ingest companies in the golden set
+        if: steps.keys.outputs.run == 'true'
+        run: |
+          companies=$(uv run python -c "import json;print(' '.join(sorted({json.loads(l)['company'] for l in open('evals/golden.jsonl') if l.strip()})))")
+          uv run sec-agent ingest $companies --limit 2
+      - name: Run evals
+        if: steps.keys.outputs.run == 'true'
+        run: uv run sec-agent eval --min-accuracy 0.8
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.keys.outputs.run == 'true'
+        with:
+          name: eval-results
+          path: evals/results/
