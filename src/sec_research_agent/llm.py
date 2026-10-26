@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import json
 import logging
+import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol, TypeVar
 
@@ -101,6 +103,122 @@ class AnthropicLLM:
             input_tokens=resp.usage.input_tokens,
             output_tokens=resp.usage.output_tokens,
         )
+
+
+class OpenAICompatibleLLM:
+    """Same interface, for OpenAI-style chat APIs: Ollama (free, local), Groq, OpenRouter.
+
+    The agent speaks Anthropic's message format, so this class converts on the way out
+    (tool_use -> tool_calls, tool_result -> role "tool") and back on the way in.
+    Local models follow tool rules less reliably than Claude; the agent nudges them.
+    """
+
+    def __init__(self, base_url: str, api_key: str = "ollama", timeout: float = 300.0):
+        import httpx
+
+        self._url = base_url.rstrip("/") + "/chat/completions"
+        self._http = httpx.Client(headers={"Authorization": f"Bearer {api_key}"}, timeout=timeout)
+
+    def chat(self, *, model, system, messages, tools=None, tool_choice=None, max_tokens=1024):
+        sys_text = system
+        if tool_choice and tool_choice.get("type") == "tool":
+            sys_text += f"\n\nRespond only by calling the {tool_choice['name']} tool."
+        elif tool_choice and tool_choice.get("type") == "any":
+            sys_text += "\n\nAlways respond by calling one of the tools."
+        if model.startswith("qwen3"):
+            sys_text += " /no_think"  # Qwen3 skips its long reasoning trace with this switch
+        body: dict[str, Any] = {
+            "model": model,
+            "messages": [{"role": "system", "content": sys_text}, *to_openai_messages(messages)],
+            "max_tokens": max_tokens,
+        }
+        if tools:
+            body["tools"] = [
+                {"type": "function", "function": {
+                    "name": t["name"], "description": t.get("description", ""), "parameters": t["input_schema"],
+                }}
+                for t in tools
+            ]
+            if tool_choice and tool_choice.get("type") == "tool":
+                body["tool_choice"] = {"type": "function", "function": {"name": tool_choice["name"]}}
+            elif tool_choice and tool_choice.get("type") == "any":
+                body["tool_choice"] = "required"
+        resp = self._http.post(self._url, json=body)
+        resp.raise_for_status()
+        data = resp.json()
+        forced = tool_choice["name"] if tool_choice and tool_choice.get("type") == "tool" else None
+        content = from_openai_message(data["choices"][0]["message"], forced)
+        usage = data.get("usage") or {}
+        return ChatResponse(
+            content=content,
+            stop_reason=data["choices"][0].get("finish_reason") or "",
+            model=model,
+            input_tokens=usage.get("prompt_tokens", 0),
+            output_tokens=usage.get("completion_tokens", 0),
+        )
+
+
+def to_openai_messages(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    out: list[dict[str, Any]] = []
+    for msg in messages:
+        role, content = msg["role"], msg["content"]
+        if isinstance(content, str):
+            out.append({"role": role, "content": content})
+            continue
+        texts = [b["text"] for b in content if b.get("type") == "text"]
+        if role == "assistant":
+            calls = [
+                {"id": b["id"], "type": "function",
+                 "function": {"name": b["name"], "arguments": json.dumps(b["input"])}}
+                for b in content if b.get("type") == "tool_use"
+            ]
+            entry: dict[str, Any] = {"role": "assistant", "content": "\n".join(texts)}
+            if calls:
+                entry["tool_calls"] = calls
+            out.append(entry)
+        else:
+            for b in content:
+                if b.get("type") == "tool_result":
+                    out.append({"role": "tool", "tool_call_id": b["tool_use_id"], "content": b["content"]})
+            if texts:
+                out.append({"role": "user", "content": "\n".join(texts)})
+    return out
+
+
+def _parse_json(text: str) -> dict[str, Any] | None:
+    start, end = text.find("{"), text.rfind("}")
+    if start == -1 or end <= start:
+        return None
+    try:
+        value = json.loads(text[start : end + 1])
+    except json.JSONDecodeError:
+        return None
+    return value if isinstance(value, dict) else None
+
+
+def from_openai_message(message: dict[str, Any], forced_tool: str | None = None) -> list[dict[str, Any]]:
+    blocks: list[dict[str, Any]] = []
+    text = (message.get("content") or "").strip()
+    calls = message.get("tool_calls") or []
+    if text and not calls:
+        # Some local models write the tool call as JSON text instead of a real call.
+        parsed = _parse_json(text)
+        if forced_tool and parsed is not None:
+            calls = [{"function": {"name": forced_tool, "arguments": parsed}}]
+            text = ""
+    if text:
+        blocks.append({"type": "text", "text": text})
+    for call in calls:
+        args = call["function"].get("arguments") or {}
+        if isinstance(args, str):
+            args = _parse_json(args) or {}
+        blocks.append({
+            "type": "tool_use",
+            "id": call.get("id") or f"call_{uuid.uuid4().hex[:12]}",
+            "name": call["function"]["name"],
+            "input": args,
+        })
+    return blocks
 
 
 def structured(

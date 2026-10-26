@@ -17,6 +17,7 @@ from .router import route
 from .tools import TOOL_SCHEMAS, ToolContext
 
 NOT_FOUND = "Not found in filings."
+NUDGE = "Use the tools to answer. When you are done, call final_answer."
 
 PARSER_SYSTEM = (
     "Extract structured fields from a question about US public companies. "
@@ -106,9 +107,13 @@ class Agent:
     def model_step(self, run: Run) -> list[dict[str, Any]]:
         """One model call. Returns the tool calls to execute; sets run.final on final_answer."""
         system = AGENT_SYSTEM.format(not_found=NOT_FOUND, today=date.today().isoformat())
+        last_step = run.steps >= self.max_steps - 1
+        if last_step:  # out of steps: answer with what we have instead of failing
+            system += "\n\nThis is your last step. Call final_answer now with what you found."
         resp = self.llm.chat(
             model=run.model, system=system, messages=run.messages, tools=TOOL_SCHEMAS,
-            tool_choice={"type": "any"}, max_tokens=1500,
+            tool_choice={"type": "tool", "name": "final_answer"} if last_step else {"type": "any"},
+            max_tokens=1500,
         )
         run.usage.add(resp)
         run.steps += 1
@@ -120,10 +125,13 @@ class Agent:
             else:
                 pending.append(use)
         if not resp.tool_uses():
-            run.final = {"answer": resp.text() or NOT_FOUND, "found": False, "citations": []}
+            # Claude never gets here (tool_choice=any). Smaller local models sometimes reply in text.
+            run.messages.append({"role": "user", "content": NUDGE})
         return pending
 
     def tool_step(self, run: Run, pending: list[dict[str, Any]]) -> None:
+        if not pending:
+            return
         results = [
             {"type": "tool_result", "tool_use_id": use["id"], "content": run.ctx.run(use["name"], use["input"])}
             for use in pending

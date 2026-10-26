@@ -19,7 +19,7 @@ class ScriptedLLM:
 
     def chat(self, *, model, system, messages, tools=None, tool_choice=None, max_tokens=1024):
         self.calls.append({"model": model, "messages": list(messages), "tool_choice": tool_choice})
-        if tool_choice and tool_choice.get("type") == "tool":
+        if tool_choice and tool_choice.get("name") == "parsed_question":
             content = [tool_use("p", "parsed_question", self.parsed)]
         else:
             content = self.steps.pop(0)
@@ -72,11 +72,14 @@ def test_pii_is_redacted_before_the_model_sees_it(apple_facts):
     assert "a@b.com" not in sent
 
 
-def test_step_limit(apple_facts):
-    loop = [[tool_use(str(i), "calculator", {"expression": "1+1"})] for i in range(10)]
+def test_step_limit_forces_final_answer(apple_facts):
+    loop = [[tool_use(str(i), "calculator", {"expression": "1+1"})] for i in range(3)]
+    loop.append([tool_use("f", "final_answer", {"answer": "Not found in filings.", "found": False, "citations": []})])
     llm = ScriptedLLM({"companies": ["AAPL"], "question_type": "lookup"}, loop)
     result = make_agent(llm, apple_facts).ask("What was Apple's revenue?")
-    assert not result.found and result.steps == 4
+    assert result.steps == 4 and result.answer == "Not found in filings."
+    assert llm.calls[-1]["tool_choice"] == {"type": "tool", "name": "final_answer"}
+    assert llm.calls[-2]["tool_choice"] == {"type": "any"}
 
 
 def test_history_is_sent(apple_facts):
@@ -88,3 +91,16 @@ def test_history_is_sent(apple_facts):
     messages = llm.calls[-1]["messages"]
     assert messages[0] == {"role": "user", "content": "Apple revenue 2024?"}
     assert messages[1]["role"] == "assistant"
+
+
+def test_text_reply_gets_a_nudge_then_continues(apple_facts):
+    llm = ScriptedLLM(
+        {"companies": ["AAPL"], "question_type": "lookup"},
+        [
+            [{"type": "text", "text": "Apple's revenue was big."}],
+            [tool_use("z", "final_answer", {"answer": "Not found in filings.", "found": False, "citations": []})],
+        ],
+    )
+    result = make_agent(llm, apple_facts).ask("What was Apple's revenue?")
+    assert result.steps == 2
+    assert llm.calls[-1]["messages"][-1]["content"].startswith("Use the tools")

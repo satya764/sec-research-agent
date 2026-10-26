@@ -42,13 +42,22 @@ def build_retriever(settings: Settings | None = None, mode: str | None = None):
     return Retriever(store, embedder, reranker, mode=mode or settings.retrieval_mode)
 
 
-def build_agent(settings: Settings | None = None, mode: str | None = None) -> Agent:
-    from .llm import AnthropicLLM
+def build_llm(settings: Settings | None = None):
+    from .llm import AnthropicLLM, OpenAICompatibleLLM
 
+    settings = settings or get_settings()
+    if settings.llm_provider == "anthropic":
+        return AnthropicLLM(settings.anthropic_api_key, fallback_model=settings.strong_model)
+    if settings.llm_provider == "openai_compatible":
+        return OpenAICompatibleLLM(settings.llm_base_url, settings.llm_api_key)
+    raise ValueError("LLM_PROVIDER must be 'anthropic' or 'openai_compatible'")
+
+
+def build_agent(settings: Settings | None = None, mode: str | None = None) -> Agent:
     settings = settings or get_settings()
     sec = build_sec(settings)
     retriever = build_retriever(settings, mode)
-    llm = AnthropicLLM(settings.anthropic_api_key, fallback_model=settings.strong_model)
+    llm = build_llm(settings)
     return Agent(
         llm=llm,
         make_context=lambda: ToolContext(sec=sec, retriever=retriever),

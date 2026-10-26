@@ -89,6 +89,9 @@ def cmd_ask(args: argparse.Namespace) -> None:
         print(f"  [{c.source_id}] {c.company} {c.form} filed {c.filing_date} ({where}) {c.url}")
     if result.invalid_citations:
         print(f"  cited ids that were never retrieved: {result.invalid_citations}")
+    if result.tool_calls:
+        calls = ", ".join(f"{c['tool']}{'' if c['ok'] else ' (error)'}" for c in result.tool_calls)
+        print(f"\ntools: {calls}")
     print(
         f"\n{result.model} ({result.route_reason}) | {result.steps} steps | "
         f"${result.cost_usd:.4f} | {result.latency_ms} ms"

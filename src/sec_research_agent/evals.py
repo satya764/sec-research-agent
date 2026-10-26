@@ -114,8 +114,7 @@ def to_markdown(summary: dict, mode: str) -> str:
 
 
 def run_evals(args: argparse.Namespace) -> int:
-    from .factory import build_agent, build_retriever, build_sec
-    from .llm import AnthropicLLM
+    from .factory import build_agent, build_llm, build_retriever, build_sec
 
     settings = get_settings()
     mode = args.mode or settings.retrieval_mode
@@ -131,7 +130,7 @@ def run_evals(args: argparse.Namespace) -> int:
     agent = build_agent(settings, mode)
     retriever = build_retriever(settings, mode)
     sec = build_sec(settings)
-    judge = AnthropicLLM(settings.anthropic_api_key)
+    judge = build_llm(settings)
 
     records = []
     for row in rows:

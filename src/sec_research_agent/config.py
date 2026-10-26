@@ -35,6 +35,12 @@ class Settings(BaseModel):
     sec_user_agent: str = ""
     database_url: str = "postgresql://postgres:postgres@localhost:5432/sec_agent"
 
+    # anthropic = Claude (paid). openai_compatible = any OpenAI-style endpoint:
+    # Ollama on your machine (free, the default base URL), Groq, OpenRouter, ...
+    llm_provider: str = "anthropic"
+    llm_base_url: str = "http://localhost:11434/v1"
+    llm_api_key: str = "ollama"
+
     cheap_model: str = "claude-haiku-5-5"
     strong_model: str = "claude-sonnet-5-5"
     judge_model: str = "claude-haiku-5-5"

@@ -51,11 +51,11 @@ Measured on a hand-verified golden set (`evals/golden.jsonl`). Filled in as eval
 
 ## Stack
 
-Python 3.13 · FastAPI · Postgres + pgvector · Claude Haiku/Sonnet · local bge-small embeddings (fastembed) · Cohere rerank · LangGraph · MCP · Arize Phoenix · Docker · Streamlit · GitHub Actions
+Python 3.13 · FastAPI · Postgres + pgvector · Claude Haiku/Sonnet or local Qwen3 via Ollama · local bge-small embeddings (fastembed) · Cohere rerank · LangGraph · MCP · Arize Phoenix · Docker · Streamlit · GitHub Actions
 
 ## Run it
 
-You need: [uv](https://docs.astral.sh/uv/), Docker, and an Anthropic API key. Embeddings run locally for free. Cohere (reranking) and OpenAI (embeddings) are optional.
+You need: [uv](https://docs.astral.sh/uv/) and Docker. Everything can run free on your machine: embeddings with fastembed, answers with [Ollama](https://ollama.com). Claude (more accurate), Cohere and OpenAI are optional, set in `.env`.
 
 ```bash
 cp .env.example .env          # fill in keys and SEC_USER_AGENT
@@ -109,7 +109,7 @@ src/sec_research_agent/
   embeddings.py   local embeddings (fastembed), OpenAI option, hash embedder for tests
   db.py           pgvector store: vector search, full-text search, metadata filters
   retrieval.py    vector / keyword / hybrid (RRF) / hybrid + Cohere rerank
-  llm.py          Anthropic wrapper: cost per call, fallback model, structured output
+  llm.py          Claude and OpenAI-compatible (Ollama) clients: cost per call, fallback, structured output
   router.py       cheap vs strong model
   guardrails.py   PII redaction, prompt injection checks
   tools.py        search_filings, get_financial_data, calculator, final_answer
@@ -138,6 +138,7 @@ docs/deploy.md    AWS deployment
 | `final_answer` as a tool with citation ids | Citations are structured and checkable; unknown ids are flagged | Free-text answers with inline citations |
 | `tool_choice: any` | The model must act through tools every turn, so it can't answer from memory | Let the model reply in text |
 | Haiku for lookups, Sonnet for multi-step | Most questions are single lookups | One model for everything |
+| Model provider is a setting (Claude or any OpenAI-compatible API) | Runs free on a laptop with Ollama; the same evals compare local vs Claude | Claude only |
 | Plain loop first, LangGraph second | Shows what the framework adds | Start with a framework |
 
 ## What didn't work
