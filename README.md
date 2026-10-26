@@ -37,17 +37,24 @@ flowchart LR
 
 ## Results
 
-Measured on a hand-verified golden set (`evals/golden.jsonl`). Filled in as evals run.
+Golden set: 27 hand-verified questions over the latest Apple, Microsoft and NVIDIA 10-Ks
+(21 numeric, 3 narrative, 3 unanswerable). Numbers were checked against each filing's financial statements.
 
-| Metric | vector only | hybrid | hybrid + rerank |
+| Metric | Qwen3 8B, local | Claude Haiku | Claude Sonnet |
 | --- | --- | --- | --- |
-| Retrieval recall@5 | – | – | – |
-| Retrieval MRR | – | – | – |
-| Answer accuracy | – | – | – |
-| Citation correctness | – | – | – |
-| Refusal accuracy | – | – | – |
-| Cost per question | – | – | – |
-| p95 latency | – | – | – |
+| Answer accuracy | 92% (22/24) | – | – |
+| Citation correctness | 100% (1 ungraded) | – | – |
+| Refusal accuracy | 100% | – | – |
+| Retrieval recall@5 | 100% (3 questions) | – | – |
+| Cost per question | $0 | – | – |
+| p95 latency | 216 s | – | – |
+
+Hybrid search, no reranker, local bge-small embeddings. Run on a MacBook with Ollama, Oct 26 2026.
+
+The two misses were growth questions: the answer text had the right percent (17.79%, 65.47%),
+but the structured `value` field held the revenue instead. The eval reads `value`, not the text,
+so it caught a schema bug a human skim would miss. Fixed by tightening the field description;
+both questions pass on rerun. A full rerun of all 27 is next before updating the table.
 
 ## Stack
 

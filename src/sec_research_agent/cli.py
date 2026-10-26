@@ -10,8 +10,8 @@ from .config import get_settings
 
 
 def cmd_facts(args: argparse.Namespace) -> None:
-    from .facts import METRICS, extract_series
     from .factory import build_sec
+    from .facts import METRICS, extract_series
 
     sec = build_sec()
     company = sec.lookup(args.company)
@@ -184,6 +184,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--mode", choices=MODES)
     s.add_argument("--include-unverified", action="store_true")
     s.add_argument("--limit", type=int)
+    s.add_argument("--ids", nargs="+", help="only these golden row ids")
     s.add_argument("--min-accuracy", type=float, default=0.0)
     s.add_argument("--out", default="evals/results")
     s.set_defaults(func=cmd_eval)

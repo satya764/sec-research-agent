@@ -91,11 +91,12 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 "value": {
                     "type": "number",
                     "description": (
-                        "The single main number in the answer: base units exactly as returned "
-                        "by get_financial_data, or the calculator result. Omit if none."
+                        "The number that directly answers the question. For a percent or growth "
+                        "question, the percent itself (e.g. 6.43, not the revenue). For an amount, "
+                        "base units exactly as returned by get_financial_data. Omit if none."
                     ),
                 },
-                "unit": {"type": "string", "description": "USD, USD/shares, percent, ..."},
+                "unit": {"type": "string", "description": "percent, USD, USD/shares, ..."},
             },
             "required": ["answer", "found", "citations"],
         },

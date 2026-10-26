@@ -6,14 +6,13 @@ import json
 import logging
 import uuid
 from dataclasses import dataclass
-from typing import Any, Protocol, TypeVar
+from typing import Any, Protocol
 
 from pydantic import BaseModel, ValidationError
 
 from .config import MODEL_PRICES
 
 log = logging.getLogger(__name__)
-T = TypeVar("T", bound=BaseModel)
 
 
 def cost_usd(model: str, input_tokens: int, output_tokens: int) -> float:
@@ -225,7 +224,7 @@ class StructuredOutputError(ValueError):
     pass
 
 
-def structured(
+def structured[T: BaseModel](
     llm: LLM, *, model: str, system: str, prompt: str, schema: type[T], name: str, description: str
 ) -> tuple[T, ChatResponse]:
     """Force the model to call one tool whose input schema is the Pydantic model.

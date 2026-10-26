@@ -130,6 +130,8 @@ def run_evals(args: argparse.Namespace) -> int:
     rows = load_golden(args.golden)
     if not args.include_unverified:
         rows = [r for r in rows if r.get("verified")]
+    if getattr(args, "ids", None):
+        rows = [r for r in rows if r["id"] in set(args.ids)]
     rows = rows[: args.limit] if args.limit else rows
     if not rows:
         print("No verified rows. Check answers by hand and set \"verified\": true, "
