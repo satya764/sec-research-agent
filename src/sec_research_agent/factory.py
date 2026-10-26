@@ -14,14 +14,26 @@ def build_sec(settings: Settings | None = None):
     return SecClient(settings.sec_user_agent, cache_dir=settings.cache_dir)
 
 
+def build_embedder(settings: Settings | None = None):
+    from .embeddings import LocalEmbedder, OpenAIEmbedder
+
+    settings = settings or get_settings()
+    if settings.embedding_provider == "openai":
+        return OpenAIEmbedder(settings.openai_api_key, settings.embedding_model, settings.embedding_dim)
+    if settings.embedding_provider == "local":
+        return LocalEmbedder(
+            settings.embedding_model, settings.embedding_dim, str(settings.cache_dir.parent / "models")
+        )
+    raise ValueError("EMBEDDING_PROVIDER must be 'local' or 'openai'")
+
+
 def build_retriever(settings: Settings | None = None, mode: str | None = None):
     from .db import ChunkStore
-    from .embeddings import OpenAIEmbedder
     from .retrieval import CohereReranker, NoopReranker, Retriever
 
     settings = settings or get_settings()
     store = ChunkStore(settings.database_url, settings.embedding_dim)
-    embedder = OpenAIEmbedder(settings.openai_api_key, settings.embedding_model, settings.embedding_dim)
+    embedder = build_embedder(settings)
     reranker = (
         CohereReranker(settings.cohere_api_key, settings.rerank_model)
         if settings.cohere_api_key

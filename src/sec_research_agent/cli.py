@@ -25,20 +25,23 @@ def cmd_init_db(args: argparse.Namespace) -> None:
     from .db import ChunkStore
 
     s = get_settings()
-    ChunkStore(s.database_url, s.embedding_dim).init_schema()
-    print("Schema ready.")
+    store = ChunkStore(s.database_url, s.embedding_dim)
+    if args.reset:
+        store.drop()
+        print("Dropped the chunks table.")
+    store.init_schema()
+    print(f"Schema ready ({s.embedding_dim}-dim vectors).")
 
 
 def cmd_ingest(args: argparse.Namespace) -> None:
     from .db import ChunkStore
-    from .embeddings import OpenAIEmbedder
-    from .factory import build_sec
+    from .factory import build_embedder, build_sec
     from .ingest import ingest_company
 
     s = get_settings()
     store = ChunkStore(s.database_url, s.embedding_dim)
     store.init_schema()
-    embedder = OpenAIEmbedder(s.openai_api_key, s.embedding_model, s.embedding_dim)
+    embedder = build_embedder(s)
     sec = build_sec()
     for company in args.companies:
         n = ingest_company(company, sec, store, embedder, tuple(args.forms), args.limit, args.force)
@@ -121,30 +124,34 @@ def build_parser() -> argparse.ArgumentParser:
     from .retrieval import MODES
 
     p = argparse.ArgumentParser(prog="sec-agent", description="SEC filings research agent")
-    p.add_argument("-v", "--verbose", action="store_true")
+    p.add_argument("-v", "--verbose", action="store_true", help="show progress logs")
+    # -v also works after the command: sec-agent ingest AAPL -v
+    common = argparse.ArgumentParser(add_help=False)
+    common.add_argument("-v", "--verbose", action="store_true", default=argparse.SUPPRESS)
     sub = p.add_subparsers(dest="command", required=True)
 
-    s = sub.add_parser("facts", help="print a metric from XBRL company facts")
+    s = sub.add_parser("facts", parents=[common], help="print a metric from XBRL company facts")
     s.add_argument("company")
     s.add_argument("metric", choices=list(METRICS))
     s.add_argument("--period", choices=["annual", "quarterly"], default="annual")
     s.add_argument("--last", type=int, default=5)
     s.set_defaults(func=cmd_facts)
 
-    s = sub.add_parser("init-db", help="create the chunks table")
+    s = sub.add_parser("init-db", parents=[common], help="create the chunks table")
+    s.add_argument("--reset", action="store_true", help="drop all stored chunks first")
     s.set_defaults(func=cmd_init_db)
 
-    s = sub.add_parser("ingest", help="download, chunk, embed and store filings")
+    s = sub.add_parser("ingest", parents=[common], help="download, chunk, embed and store filings")
     s.add_argument("companies", nargs="+")
     s.add_argument("--forms", nargs="+", default=["10-K"])
     s.add_argument("--limit", type=int, default=3, help="filings per company")
     s.add_argument("--force", action="store_true", help="re-ingest stored filings")
     s.set_defaults(func=cmd_ingest)
 
-    s = sub.add_parser("stats", help="what is stored")
+    s = sub.add_parser("stats", parents=[common], help="what is stored")
     s.set_defaults(func=cmd_stats)
 
-    s = sub.add_parser("search", help="search filing passages")
+    s = sub.add_parser("search", parents=[common], help="search filing passages")
     s.add_argument("query")
     s.add_argument("--company")
     s.add_argument("--year", type=int)
@@ -153,23 +160,23 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("-k", type=int, default=5)
     s.set_defaults(func=cmd_search)
 
-    s = sub.add_parser("ask", help="answer a question")
+    s = sub.add_parser("ask", parents=[common], help="answer a question")
     s.add_argument("question")
     s.add_argument("--mode", choices=MODES)
     s.add_argument("--graph", action="store_true", help="use the LangGraph version")
     s.add_argument("--json", action="store_true")
     s.set_defaults(func=cmd_ask)
 
-    s = sub.add_parser("serve", help="run the HTTP API")
+    s = sub.add_parser("serve", parents=[common], help="run the HTTP API")
     s.add_argument("--host", default="127.0.0.1")
     s.add_argument("--port", type=int, default=8000)
     s.add_argument("--reload", action="store_true")
     s.set_defaults(func=cmd_serve)
 
-    s = sub.add_parser("mcp", help="run the MCP server over stdio")
+    s = sub.add_parser("mcp", parents=[common], help="run the MCP server over stdio")
     s.set_defaults(func=cmd_mcp)
 
-    s = sub.add_parser("eval", help="run the golden-set evals")
+    s = sub.add_parser("eval", parents=[common], help="run the golden-set evals")
     s.add_argument("--golden", default="evals/golden.jsonl")
     s.add_argument("--mode", choices=MODES)
     s.add_argument("--include-unverified", action="store_true")
@@ -178,7 +185,7 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--out", default="evals/results")
     s.set_defaults(func=cmd_eval)
 
-    s = sub.add_parser("candidates", help="draft numeric golden questions from XBRL (verify by hand)")
+    s = sub.add_parser("candidates", parents=[common], help="draft numeric golden questions from XBRL (verify by hand)")
     s.add_argument("companies", nargs="+")
     s.add_argument("--metrics", nargs="+", default=["revenue", "net_income", "total_assets"])
     s.add_argument("--years", type=int, default=2)

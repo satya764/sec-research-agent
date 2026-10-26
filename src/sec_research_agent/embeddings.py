@@ -14,6 +14,25 @@ class Embedder(Protocol):
 
     def embed(self, texts: list[str]) -> list[list[float]]: ...
 
+    def embed_query(self, text: str) -> list[float]: ...
+
+
+class LocalEmbedder:
+    """Runs on your machine with fastembed (ONNX, no GPU). Free. Downloads the model once."""
+
+    def __init__(self, model: str = "BAAI/bge-small-en-v1.5", dim: int = 384, cache_dir: str | None = None):
+        from fastembed import TextEmbedding
+
+        self.dim = dim
+        self._model = TextEmbedding(model_name=model, cache_dir=cache_dir)
+
+    def embed(self, texts: list[str]) -> list[list[float]]:
+        return [vec.tolist() for vec in self._model.passage_embed(texts)]
+
+    def embed_query(self, text: str) -> list[float]:
+        # bge models expect a search prefix on queries; query_embed adds it
+        return next(iter(self._model.query_embed(text))).tolist()
+
 
 class OpenAIEmbedder:
     def __init__(self, api_key: str, model: str = "text-embedding-3-small", dim: int = 1536):
@@ -48,6 +67,9 @@ class OpenAIEmbedder:
             return [d["embedding"] for d in data]
         raise RuntimeError("unreachable")
 
+    def embed_query(self, text: str) -> list[float]:
+        return self.embed([text])[0]
+
 
 class HashEmbedder:
     """Deterministic bag-of-words vectors. Only for tests and offline runs: no semantic meaning."""
@@ -65,3 +87,6 @@ class HashEmbedder:
             norm = math.sqrt(sum(v * v for v in vec)) or 1.0
             vectors.append([v / norm for v in vec])
         return vectors
+
+    def embed_query(self, text: str) -> list[float]:
+        return self.embed([text])[0]

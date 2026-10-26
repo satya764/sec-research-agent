@@ -11,6 +11,7 @@ dependencies = [
     "anthropic>=0.40",
     "beautifulsoup4>=4.12",
     "fastapi>=0.115",
+    "fastembed>=0.5",
     "httpx>=0.28.1",
     "numpy>=2.0",
     "pgvector>=0.3",

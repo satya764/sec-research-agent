@@ -80,6 +80,18 @@ class ChunkStore:
 
     def init_schema(self) -> None:
         self.conn.execute(SCHEMA.format(dim=self._dim))
+        row = self.conn.execute(
+            "SELECT atttypmod FROM pg_attribute "
+            "WHERE attrelid = 'chunks'::regclass AND attname = 'embedding'"
+        ).fetchone()
+        if row and row[0] != self._dim:
+            raise RuntimeError(
+                f"chunks table stores {row[0]}-dim vectors but EMBEDDING_DIM is {self._dim}. "
+                "Run: uv run sec-agent init-db --reset (deletes stored chunks)"
+            )
+
+    def drop(self) -> None:
+        self.conn.execute("DROP TABLE IF EXISTS chunks")
 
     def has_filing(self, accession: str) -> bool:
         row = self.conn.execute(

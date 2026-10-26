@@ -89,7 +89,7 @@ class Retriever:
         filters = filters or Filters()
         if self.mode == "keyword":
             return self.store.keyword_search(query, filters, k)
-        vector_hits = self.store.vector_search(self.embedder.embed([query])[0], filters, candidates)
+        vector_hits = self.store.vector_search(self.embedder.embed_query(query), filters, candidates)
         if self.mode == "vector":
             return vector_hits[:k]
         keyword_hits = self.store.keyword_search(query, filters, candidates)

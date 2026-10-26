@@ -39,8 +39,11 @@ class Settings(BaseModel):
     strong_model: str = "claude-sonnet-5-5"
     judge_model: str = "claude-haiku-5-5"
 
-    embedding_model: str = "text-embedding-3-small"
-    embedding_dim: int = 1536
+    # local = free, runs on your machine. openai = needs OPENAI_API_KEY
+    # (then also set EMBEDDING_MODEL=text-embedding-3-small and EMBEDDING_DIM=1536).
+    embedding_provider: str = "local"
+    embedding_model: str = "BAAI/bge-small-en-v1.5"
+    embedding_dim: int = 384
     rerank_model: str = "rerank-v3.5"
     retrieval_mode: str = "hybrid_rerank"
 

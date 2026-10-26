@@ -51,11 +51,11 @@ Measured on a hand-verified golden set (`evals/golden.jsonl`). Filled in as eval
 
 ## Stack
 
-Python 3.13 · FastAPI · Postgres + pgvector · Claude Haiku/Sonnet · OpenAI embeddings · Cohere rerank · LangGraph · MCP · Arize Phoenix · Docker · Streamlit · GitHub Actions
+Python 3.13 · FastAPI · Postgres + pgvector · Claude Haiku/Sonnet · local bge-small embeddings (fastembed) · Cohere rerank · LangGraph · MCP · Arize Phoenix · Docker · Streamlit · GitHub Actions
 
 ## Run it
 
-You need: [uv](https://docs.astral.sh/uv/), Docker, an Anthropic API key, an OpenAI API key (embeddings). Cohere is optional.
+You need: [uv](https://docs.astral.sh/uv/), Docker, and an Anthropic API key. Embeddings run locally for free. Cohere (reranking) and OpenAI (embeddings) are optional.
 
 ```bash
 cp .env.example .env          # fill in keys and SEC_USER_AGENT
@@ -106,7 +106,7 @@ src/sec_research_agent/
   facts.py        clean annual/quarterly series out of XBRL facts
   filings.py      HTML to text, find Items 1, 1A, 7 (skips the table of contents)
   chunking.py     paragraph -> sentence -> hard-cut chunking with overlap
-  embeddings.py   OpenAI embeddings, plus a hash embedder for tests
+  embeddings.py   local embeddings (fastembed), OpenAI option, hash embedder for tests
   db.py           pgvector store: vector search, full-text search, metadata filters
   retrieval.py    vector / keyword / hybrid (RRF) / hybrid + Cohere rerank
   llm.py          Anthropic wrapper: cost per call, fallback model, structured output
@@ -133,6 +133,7 @@ docs/deploy.md    AWS deployment
 | Only Items 1, 1A, 7 (10-K) and MD&A / risk factors (10-Q) | These answer descriptive questions; the rest is boilerplate or numbers | Whole filing |
 | Longest span per item heading | Every item also appears in the table of contents | First match, regex on TOC page numbers |
 | Hybrid search with reciprocal rank fusion | Vector search misses exact terms (product names, "Item 1A"); keyword misses paraphrases | Vector only |
+| Local embeddings (bge-small, 384 dims) by default | Free, private, no rate limits; OpenAI stays one setting away for comparison | OpenAI text-embedding-3-small |
 | Postgres for vectors and keywords | One database, metadata filters in SQL | Pinecone, Chroma, Elasticsearch |
 | `final_answer` as a tool with citation ids | Citations are structured and checkable; unknown ids are flagged | Free-text answers with inline citations |
 | `tool_choice: any` | The model must act through tools every turn, so it can't answer from memory | Let the model reply in text |
