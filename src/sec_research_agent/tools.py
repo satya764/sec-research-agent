@@ -149,7 +149,7 @@ class ToolContext:
             text = guardrails.clean_retrieved(c.content)
             self.sources[hit.source_id] = Citation(
                 source_id=hit.source_id, kind="filing", company=c.company, form=c.form,
-                filing_date=c.filing_date, section=c.section, url=c.url, snippet=text[:1000],
+                filing_date=c.filing_date, section=c.section, url=c.url, snippet=text,
             )
             passages.append({
                 "source_id": hit.source_id, "company": c.company, "form": c.form,

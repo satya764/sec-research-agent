@@ -21,7 +21,7 @@ from pydantic import BaseModel
 
 from .config import get_settings
 from .facts import METRICS, extract_series
-from .llm import LLM, structured
+from .llm import LLM, StructuredOutputError, structured
 from .models import AskResult, Filters
 
 
@@ -50,6 +50,14 @@ def p95(values: list[float]) -> float:
         return 0.0
     ordered = sorted(values)
     return ordered[max(0, math.ceil(0.95 * len(ordered)) - 1)]
+
+
+def _graded(fn, *args) -> bool | None:
+    """Run a judge; None means the judge model failed to return a verdict (not counted)."""
+    try:
+        return fn(*args)
+    except StructuredOutputError:
+        return None
 
 
 def judge_answer(llm: LLM, model: str, question: str, reference: str, answer: str) -> bool:
@@ -93,6 +101,7 @@ def summarize(records: list[dict]) -> dict:
         "refusal_accuracy": _mean([r.get("refusal_correct") for r in records]),
         "avg_cost_usd": _mean([r["cost_usd"] for r in records]),
         "p95_latency_ms": p95([r["latency_ms"] for r in records]),
+        "ungraded_by_judge": sum(1 for r in records if r.get("judge_failed")),
     }
 
 
@@ -104,7 +113,7 @@ def to_markdown(summary: dict, mode: str) -> str:
             return f"${value:.4f}"
         if key == "p95_latency_ms":
             return f"{value / 1000:.1f} s"
-        if key == "questions":
+        if key in ("questions", "ungraded_by_judge"):
             return str(value)
         return f"{value:.0%}"
 
@@ -133,12 +142,14 @@ def run_evals(args: argparse.Namespace) -> int:
     judge = build_llm(settings)
 
     records = []
-    for row in rows:
+    for i, row in enumerate(rows, 1):
+        print(f"[{i}/{len(rows)}] {row['id']} ...", flush=True)
         result = agent.ask(row["question"])
         rec: dict = {"id": row["id"], "type": row["type"], "answer": result.answer,
                      "found": result.found, "value": result.value,
                      "cost_usd": result.cost_usd, "latency_ms": result.latency_ms,
-                     "model": result.model}
+                     "model": result.model,
+                     "cited": [c.source_id for c in result.citations]}
         answerable = row["type"] != "unanswerable"
         rec["refusal_correct"] = result.found == answerable
 
@@ -158,10 +169,12 @@ def run_evals(args: argparse.Namespace) -> int:
                 and within(result.value, row["expected_value"], row.get("tolerance_pct"), row.get("tolerance_abs"))
             )
         elif row.get("expected_answer"):
-            rec["correct"] = judge_answer(judge, settings.judge_model, row["question"], row["expected_answer"], result.answer)
+            rec["correct"] = _graded(judge_answer, judge, settings.judge_model, row["question"], row["expected_answer"], result.answer)
 
         if answerable and result.found:
-            rec["citations_ok"] = judge_citations(judge, settings.judge_model, result)
+            rec["citations_ok"] = _graded(judge_citations, judge, settings.judge_model, result)
+            if rec["citations_ok"] is None:
+                rec["judge_failed"] = True
         records.append(rec)
         print(f"{row['id']:30} correct={rec.get('correct')} found={result.found} "
               f"${result.cost_usd:.4f} {result.latency_ms}ms")

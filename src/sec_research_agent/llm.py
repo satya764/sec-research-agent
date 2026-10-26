@@ -8,7 +8,7 @@ import uuid
 from dataclasses import dataclass
 from typing import Any, Protocol, TypeVar
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .config import MODEL_PRICES
 
@@ -221,20 +221,35 @@ def from_openai_message(message: dict[str, Any], forced_tool: str | None = None)
     return blocks
 
 
+class StructuredOutputError(ValueError):
+    pass
+
+
 def structured(
     llm: LLM, *, model: str, system: str, prompt: str, schema: type[T], name: str, description: str
 ) -> tuple[T, ChatResponse]:
-    """Force the model to call one tool whose input schema is the Pydantic model."""
-    tool = {"name": name, "description": description, "input_schema": schema.model_json_schema()}
-    resp = llm.chat(
-        model=model,
-        system=system,
-        messages=[{"role": "user", "content": prompt}],
-        tools=[tool],
-        tool_choice={"type": "tool", "name": name},
-        max_tokens=512,
-    )
-    uses = resp.tool_uses()
-    if not uses:
-        raise ValueError(f"Model did not return structured output for {name}")
-    return schema.model_validate(uses[0]["input"]), resp
+    """Force the model to call one tool whose input schema is the Pydantic model.
+    Retries once with the fields spelled out, since small local models sometimes miss the format."""
+    json_schema = schema.model_json_schema()
+    tool = {"name": name, "description": description, "input_schema": json_schema}
+    content = prompt
+    for _ in range(2):
+        resp = llm.chat(
+            model=model,
+            system=system,
+            messages=[{"role": "user", "content": content}],
+            tools=[tool],
+            tool_choice={"type": "tool", "name": name},
+            max_tokens=1024,
+        )
+        uses = [u for u in resp.tool_uses() if u["name"] == name] or resp.tool_uses()
+        if uses:
+            try:
+                return schema.model_validate(uses[0]["input"]), resp
+            except ValidationError:
+                pass
+        content = (
+            f"{prompt}\n\nCall the {name} tool, or reply with only a JSON object "
+            f"with these fields: {json.dumps(json_schema.get('properties', {}))}"
+        )
+    raise StructuredOutputError(f"{model} did not return valid {name} output")

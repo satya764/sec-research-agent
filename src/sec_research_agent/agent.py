@@ -11,7 +11,7 @@ from typing import Any
 
 from . import guardrails
 from .facts import METRICS
-from .llm import LLM, Usage, structured
+from .llm import LLM, StructuredOutputError, Usage, structured
 from .models import AskResult, ParsedQuestion
 from .router import route
 from .tools import TOOL_SCHEMAS, ToolContext
@@ -89,12 +89,15 @@ class Agent:
             }
             return run
 
-        run.parsed, resp = structured(
-            self.llm, model=self.cheap_model, system=PARSER_SYSTEM, prompt=clean,
-            schema=ParsedQuestion, name="parsed_question",
-            description="Structured fields extracted from the question",
-        )
-        run.usage.add(resp)
+        try:
+            run.parsed, resp = structured(
+                self.llm, model=self.cheap_model, system=PARSER_SYSTEM, prompt=clean,
+                schema=ParsedQuestion, name="parsed_question",
+                description="Structured fields extracted from the question",
+            )
+            run.usage.add(resp)
+        except StructuredOutputError:
+            run.parsed = ParsedQuestion()  # unknown type routes to the strong model
         run.model, run.route_reason = route(run.parsed, self.cheap_model, self.strong_model)
 
         for past_q, past_a in history or []:
