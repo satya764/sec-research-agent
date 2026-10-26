@@ -31,7 +31,8 @@ App Runner -> Create service -> Container registry (ECR) -> the image above.
 
 - Port: 8000
 - Health check: HTTP `/health`
-- Environment: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `COHERE_API_KEY`, `SEC_USER_AGENT`, `DATABASE_URL`
+- Environment: `ANTHROPIC_API_KEY`, `SEC_USER_AGENT`, `DATABASE_URL`, optional `COHERE_API_KEY`
+  (the cloud demo uses Claude; a local Ollama model would need a GPU server)
   (store keys in Secrets Manager and reference them)
 - Networking: give App Runner a VPC connector if RDS is private
 

@@ -24,7 +24,6 @@ jobs:
           --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 10
     env:
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       COHERE_API_KEY: ${{ secrets.COHERE_API_KEY }}
       SEC_USER_AGENT: ${{ secrets.SEC_USER_AGENT }}
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/sec_agent
@@ -33,7 +32,7 @@ jobs:
       - name: Skip without API keys
         id: keys
         run: |
-          if [ -z "$ANTHROPIC_API_KEY" ] || [ -z "$OPENAI_API_KEY" ]; then
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
             echo "run=false" >> "$GITHUB_OUTPUT"; echo "No API keys in repo secrets, skipping."
           else
             echo "run=true" >> "$GITHUB_OUTPUT"

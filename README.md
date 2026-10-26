@@ -2,12 +2,12 @@
 
 Ask a question about a public company. Get an answer built from its 10-K and 10-Q filings, with every number and claim cited.
 
-> Status: code complete, being tested on real filings. Oct 2026 – Jan 2027.
+> Status: working end to end on Apple, Microsoft and NVIDIA 10-Ks, runs free on a laptop. Oct 2026 – Jan 2027.
 
 ## What it does
 
 - Parses a question into structured fields: companies, metric, fiscal years, question type
-- Searches the narrative sections of filings (Item 1 Business, 1A Risk Factors, 7 MD&A) with hybrid search + reranking
+- Searches the narrative sections of filings (Item 1 Business, 1A Risk Factors, 7 MD&A) with hybrid search, plus optional Cohere reranking
 - Pulls numbers from the SEC EDGAR Company Facts API (XBRL), never from model memory
 - Does math with a calculator tool, not in the model's head
 - Cites the filing and section for every claim, and flags citations it never retrieved
@@ -42,19 +42,27 @@ Golden set: 27 hand-verified questions over the latest Apple, Microsoft and NVID
 
 | Metric | Qwen3 8B, local | Claude Haiku | Claude Sonnet |
 | --- | --- | --- | --- |
-| Answer accuracy | 92% (22/24) | – | – |
-| Citation correctness | 100% (1 ungraded) | – | – |
-| Refusal accuracy | 100% | – | – |
+| Answer accuracy | 100% (24/24) | – | – |
+| Citation correctness | 100% | – | – |
+| Refusal accuracy | 100% (3/3) | – | – |
 | Retrieval recall@5 | 100% (3 questions) | – | – |
 | Cost per question | $0 | – | – |
-| p95 latency | 216 s | – | – |
+| p95 latency | 198 s | – | – |
 
 Hybrid search, no reranker, local bge-small embeddings. Run on a MacBook with Ollama, Oct 26 2026.
+Narrative answers are graded on citations only until reference answers are written.
 
-The two misses were growth questions: the answer text had the right percent (17.79%, 65.47%),
+| Run | Answer accuracy | Change |
+| --- | --- | --- |
+| 1 | 92% (22/24) | baseline |
+| 2 | 100% (24/24) | clarified the `value` field in `final_answer` |
+
+Run 1 missed two growth questions: the answer text had the right percent (17.79%, 65.47%),
 but the structured `value` field held the revenue instead. The eval reads `value`, not the text,
-so it caught a schema bug a human skim would miss. Fixed by tightening the field description;
-both questions pass on rerun. A full rerun of all 27 is next before updating the table.
+so it caught a schema bug a human skim would miss.
+
+This set is small and mostly single-company lookups. 100% here means the basics work, not that
+the agent is done. Next: harder questions (multi-company comparisons, 3-year trends, 10-Q data).
 
 ## Stack
 
@@ -64,8 +72,16 @@ Python 3.13 · FastAPI · Postgres + pgvector · Claude Haiku/Sonnet or local Qw
 
 You need: [uv](https://docs.astral.sh/uv/) and Docker. Everything can run free on your machine: embeddings with fastembed, answers with [Ollama](https://ollama.com). Claude (more accurate), Cohere and OpenAI are optional, set in `.env`.
 
+Free local model (once):
+
 ```bash
-cp .env.example .env          # fill in keys and SEC_USER_AGENT
+ollama pull qwen3:8b
+printf 'FROM qwen3:8b\nPARAMETER num_ctx 16384\n' > Modelfile   # default 4K context is too small for the agent
+ollama create qwen3-16k -f Modelfile && rm Modelfile
+```
+
+```bash
+cp .env.example .env          # set SEC_USER_AGENT and pick a model block (local or Claude)
 uv sync --all-extras          # installs everything, updates uv.lock
 uv run pytest                 # unit tests, no keys needed
 
@@ -74,7 +90,8 @@ uv run sec-agent facts AAPL revenue
 
 # 2. Database + filings
 docker compose up -d db
-uv run sec-agent ingest AAPL MSFT NVDA --limit 2 -v
+uv run sec-agent init-db
+uv run sec-agent ingest AAPL MSFT NVDA --limit 1 -v
 uv run sec-agent stats
 uv run sec-agent search "supplier concentration risk" --company AAPL
 
@@ -98,12 +115,14 @@ Or run the API and database together: `docker compose up --build`.
 uv run sec-agent candidates AAPL MSFT NVDA          # drafts numeric questions from XBRL
 # open evals/candidates.jsonl, check each number against the filing,
 # set "verified": true, and copy the rows into evals/golden.jsonl
-uv run sec-agent eval --mode vector
-uv run sec-agent eval --mode hybrid
-uv run sec-agent eval --mode hybrid_rerank
+uv run sec-agent eval                                # all verified rows
+uv run sec-agent eval --limit 5                      # quick check
+uv run sec-agent eval --ids msft-revenue-growth-2026 # rerun specific rows
+uv run sec-agent eval --mode vector                  # compare retrieval modes: vector, hybrid, hybrid_rerank
 ```
 
-Only verified rows count. Results go to `evals/results/`. The Evals workflow runs on pull requests and fails below 80% accuracy.
+Only verified rows count. Results go to `evals/results/`. The Evals workflow runs on pull requests
+when an `ANTHROPIC_API_KEY` repo secret is set, and fails below 80% accuracy.
 
 ## Project layout
 
