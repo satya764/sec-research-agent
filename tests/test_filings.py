@@ -43,3 +43,20 @@ def test_split_sections_skips_table_of_contents():
 
 def test_unknown_form_returns_nothing():
     assert split_sections(html_to_text(HTML), "8-K") == {}
+
+
+def test_clean_section_drops_page_furniture():
+    from sec_research_agent.filings import clean_section
+
+    body = "\n".join([
+        "Item 1A. Risk Factors",
+        "Supply chain risk is real.",
+        "Apple Inc. | 2025 Form 10-K | 11",
+        "12",
+        "Table of Contents",
+        "PART I",
+        "Item 1A",
+        "(Continued)",
+        "Customers in 12 countries rely on us.",
+    ])
+    assert clean_section(body) == "Item 1A. Risk Factors\nSupply chain risk is real.\nCustomers in 12 countries rely on us."

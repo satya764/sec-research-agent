@@ -81,6 +81,28 @@ def split_sections(text: str, form: str) -> dict[Section, str]:
             body = text[start:stop].strip()
             if len(body) > len(best):
                 best = body
+        best = clean_section(best)
         if len(best) >= MIN_SECTION_CHARS:
             sections[section] = best
     return sections
+
+
+PAGE_JUNK = re.compile(
+    r"^(\d{1,3}"                                   # bare page number
+    r"|table of contents"                          # running link back to the TOC
+    r"|\(continued\)"
+    r"|part\s+[ivx]+"                              # running PART I / PART II headers
+    r"|item\s+\d{1,2}[a-d]?\.?"                    # running item headers (kept on the first line)
+    r"|.{0,80}\|\s*\d{4}\s+form\s+10-[kq]\s*\|\s*\d{1,3}"  # "Apple Inc. | 2025 Form 10-K | 11"
+    r")$",
+    re.IGNORECASE,
+)
+
+
+def clean_section(body: str) -> str:
+    """Drop page furniture (page numbers, running headers, footers) that would pollute chunks."""
+    lines = body.splitlines()
+    if not lines:
+        return body
+    kept = [lines[0]] + [line for line in lines[1:] if not PAGE_JUNK.match(line.strip())]
+    return "\n".join(kept).strip()

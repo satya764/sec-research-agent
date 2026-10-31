@@ -170,7 +170,7 @@ docs/deploy.md    AWS deployment
 ## What didn't work
 
 - Ollama's default 4K context made the agent loop until the step limit. Fixed with a 16K-context model (`num_ctx 16384`).
-- Page footers like "Apple Inc. | 2025 Form 10-K | 11" leak into chunks. Not fixed yet.
+- Page furniture leaked into chunks: Apple's footers ("Apple Inc. | 2025 Form 10-K | 11"), NVIDIA's "Table of Contents" links, page numbers, Microsoft's running "PART I / Item 1A" headers. Fixed with a line filter after section extraction (0 left across all three 10-Ks).
 - The local model sometimes replies in text instead of calling a tool; the agent nudges it and continues.
 - Citation check flagged a correct answer (Microsoft segments): the judge only saw the first 1,000 characters of each passage. Now it sees the full passage.
 
