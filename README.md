@@ -4,6 +4,8 @@ Ask a question about a public company. Get an answer built from its 10-K and 10-
 
 > Status: working end to end on Apple, Microsoft and NVIDIA 10-Ks, runs free on a laptop. Oct 2026 – Jan 2027.
 
+![Streamlit UI answering a gross margin question with sources, cost and latency](docs/ui.png)
+
 ## What it does
 
 - Parses a question into structured fields: companies, metric, fiscal years, question type
@@ -43,16 +45,16 @@ Every expected number was checked against the filing's financial statements.
 
 | Metric | Qwen3 8B, local | Claude Haiku 5.5 | Claude Sonnet 5.5 |
 | --- | --- | --- | --- |
-| Answer accuracy | rerun pending | **100%** (34/34) | **100%** (34/34) |
-| Citation correctness | rerun pending | 97% | 94% |
+| Answer accuracy | rerun pending | **100%** (37/37) | **100%** (37/37) |
+| Citation correctness | rerun pending | 97% | 95% |
 | Refusal accuracy | rerun pending | 100% | 100% |
 | Retrieval recall@5 | 100% | 100% | 100% |
-| Cost per question | $0 | **$0.0009** | $0.0161 |
+| Cost per question | $0 | **$0.0009** | $0.0163 |
 | Cost for all 37 | $0 | $0.03 | $0.60 |
 | p95 latency | ~200 s | **4.9 s** | 9.4 s |
 
 Hybrid search, no reranker, local bge-small embeddings, Claude Haiku as citation judge for both Claude runs.
-Oct 31 2026. Narrative answers are graded on citations only.
+Oct 31 2026. Narrative answers are graded by an LLM judge against reference answers written from the 10-K text.
 
 **Decision: Haiku for everything.** On this set Sonnet costs 18x more and is twice as slow with no accuracy gain,
 so the recommended config sets both `CHEAP_MODEL` and `STRONG_MODEL` to Haiku. The router stays in place for
@@ -70,6 +72,22 @@ both answers were correct arithmetic on cited numbers, which the judge is told t
 | 2 | 27 base | 100% (24/24) | clarified the `value` field in `final_answer` |
 | 3 | 10 hard | 80% (8/10) | first hard set |
 | 4 | 3 failed | all pass | metric hint, newest-first values, "don't guess the year" |
+
+## Load test
+
+`scripts/loadtest.py`, 500 requests at concurrency 20 against one API process on a MacBook, Postgres state backend.
+Half are `/facts` lookups, half are `/ask` on a cached answer, so this measures the API, database and cache,
+not model speed (model latency is in the table above).
+
+| | Result |
+| --- | --- |
+| Throughput | 124.7 req/s |
+| Latency | p50 181 ms, p95 328 ms, p99 515 ms |
+| Errors | 0 |
+| Rate limiter (20 `/ask` per minute per client) | rejected 231 of the over-limit calls with 429 |
+
+The API holds no state of its own (rate limits, cache and chat history are in Postgres), so throughput scales by
+adding instances behind a load balancer. Uncached answers are bound by the model: about 5 s each on Haiku.
 
 ## Stack
 
@@ -170,7 +188,7 @@ docs/deploy.md    AWS deployment
 | Postgres for vectors and keywords | One database, metadata filters in SQL | Pinecone, Chroma, Elasticsearch |
 | `final_answer` as a tool with citation ids | Citations are structured and checkable; unknown ids are flagged | Free-text answers with inline citations |
 | `tool_choice: any` | The model must act through tools every turn, so it can't answer from memory | Let the model reply in text |
-| Haiku for lookups, Sonnet for multi-step | Most questions are single lookups | One model for everything |
+| Haiku for everything, router kept | Haiku matched Sonnet on all 37 questions at 1/18 the cost | Sonnet for multi-step questions |
 | Model provider is a setting (Claude or any OpenAI-compatible API) | Runs free on a laptop with Ollama; the same evals compare local vs Claude | Claude only |
 | Plain loop first, LangGraph second | Shows what the framework adds | Start with a framework |
 
