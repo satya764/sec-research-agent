@@ -53,7 +53,13 @@ class Settings(BaseModel):
     rerank_model: str = "rerank-v3.5"
     retrieval_mode: str = "hybrid_rerank"
 
+    # API: memory = single process; postgres = shared across instances (horizontal scaling)
+    state_backend: str = "memory"
+    api_key: str = ""  # set to require an X-API-Key header on /ask and /facts
+    cors_origins: str = "*"
+
     cache_dir: Path = Path("data/cache")
+    model_dir: Path = Path("data/models")  # downloaded embedding models
     max_agent_steps: int = 8
     rate_limit_per_minute: int = 20
     answer_cache_seconds: int = 3600

@@ -7,6 +7,7 @@ import httpx
 import streamlit as st
 
 API_URL = os.environ.get("API_URL", "http://localhost:8000")
+HEADERS = {"X-API-Key": os.environ["API_KEY"]} if os.environ.get("API_KEY") else {}
 
 st.set_page_config(page_title="SEC Filings Research Agent", page_icon="📄")
 st.title("SEC Filings Research Agent")
@@ -31,6 +32,7 @@ if question:
             resp = httpx.post(
                 f"{API_URL}/ask",
                 json={"question": question, "session_id": st.session_state.session_id},
+                headers=HEADERS,
                 timeout=120,
             )
             resp.raise_for_status()

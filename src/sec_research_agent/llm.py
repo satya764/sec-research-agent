@@ -64,6 +64,18 @@ class LLM(Protocol):
     ) -> ChatResponse: ...
 
 
+FORCED_CHOICES = {"any", "tool"}
+
+
+def soften_tool_choice(system: str, tool_choice: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """For models without forced tool use: tool_choice auto, plus the rule stated in the prompt."""
+    if tool_choice.get("type") == "tool":
+        system += f"\n\nRespond only by calling the {tool_choice['name']} tool."
+    else:
+        system += "\n\nAlways respond by calling one of the tools."
+    return system, {"type": "auto"}
+
+
 class AnthropicLLM:
     def __init__(self, api_key: str, fallback_model: str | None = None, max_retries: int = 3):
         import anthropic
@@ -73,28 +85,46 @@ class AnthropicLLM:
         self._anthropic = anthropic
         self._client = anthropic.Anthropic(api_key=api_key, max_retries=max_retries)
         self._fallback = fallback_model
+        self._no_forced_tools: set[str] = set()  # models that reject tool_choice any/tool
 
     def chat(self, *, model, system, messages, tools=None, tool_choice=None, max_tokens=1024):
         try:
             return self._call(model, system, messages, tools, tool_choice, max_tokens)
-        except (self._anthropic.APIStatusError, self._anthropic.APIConnectionError) as err:
+        except (
+            self._anthropic.RateLimitError,
+            self._anthropic.InternalServerError,
+            self._anthropic.APIConnectionError,
+        ) as err:
+            # fall back only on capacity / outage errors; a bad request would fail on any model
             if not self._fallback or self._fallback == model:
                 raise
             log.warning("%s failed (%s); falling back to %s", model, err, self._fallback)
             return self._call(self._fallback, system, messages, tools, tool_choice, max_tokens)
 
     def _call(self, model, system, messages, tools, tool_choice, max_tokens) -> ChatResponse:
+        forced = bool(tool_choice and tool_choice.get("type") in FORCED_CHOICES)
+        if forced and model in self._no_forced_tools:
+            system, tool_choice = soften_tool_choice(system, tool_choice)
         kwargs: dict[str, Any] = {
             "model": model,
             "system": system,
             "messages": messages,
-            "max_tokens": max_tokens,
+            # room for thinking tokens on models that think by default; billing is per token used
+            "max_tokens": max(max_tokens, 4096),
         }
         if tools:
             kwargs["tools"] = tools
         if tool_choice:
             kwargs["tool_choice"] = tool_choice
-        resp = self._client.messages.create(**kwargs)
+        try:
+            resp = self._client.messages.create(**kwargs)
+        except self._anthropic.BadRequestError as err:
+            if not (forced and "tool_choice" in str(err)):
+                raise
+            log.info("%s does not support forced tool use; using tool_choice auto", model)
+            self._no_forced_tools.add(model)
+            kwargs["system"], kwargs["tool_choice"] = soften_tool_choice(system, tool_choice)
+            resp = self._client.messages.create(**kwargs)
         return ChatResponse(
             content=[block.model_dump(exclude_none=True) for block in resp.content],
             stop_reason=resp.stop_reason or "",
@@ -120,10 +150,8 @@ class OpenAICompatibleLLM:
 
     def chat(self, *, model, system, messages, tools=None, tool_choice=None, max_tokens=1024):
         sys_text = system
-        if tool_choice and tool_choice.get("type") == "tool":
-            sys_text += f"\n\nRespond only by calling the {tool_choice['name']} tool."
-        elif tool_choice and tool_choice.get("type") == "any":
-            sys_text += "\n\nAlways respond by calling one of the tools."
+        if tool_choice and tool_choice.get("type") in FORCED_CHOICES:
+            sys_text, _ = soften_tool_choice(system, tool_choice)
         if model.startswith("qwen3"):
             sys_text += " /no_think"  # Qwen3 skips its long reasoning trace with this switch
         body: dict[str, Any] = {

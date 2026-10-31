@@ -37,32 +37,39 @@ flowchart LR
 
 ## Results
 
-Golden set: 27 hand-verified questions over the latest Apple, Microsoft and NVIDIA 10-Ks
-(21 numeric, 3 narrative, 3 unanswerable). Numbers were checked against each filing's financial statements.
+Golden set: 37 hand-verified questions over the latest Apple, Microsoft and NVIDIA 10-Ks: 21 single lookups,
+10 hard (margins, multi-year growth, cross-company comparisons), 3 narrative, 3 unanswerable.
+Every expected number was checked against the filing's financial statements.
 
-| Metric | Qwen3 8B, local | Claude Haiku | Claude Sonnet |
+| Metric | Qwen3 8B, local | Claude Haiku 5.5 | Claude Sonnet 5.5 |
 | --- | --- | --- | --- |
-| Answer accuracy | 100% (24/24) | – | – |
-| Citation correctness | 100% | – | – |
-| Refusal accuracy | 100% (3/3) | – | – |
-| Retrieval recall@5 | 100% (3 questions) | – | – |
-| Cost per question | $0 | – | – |
-| p95 latency | 198 s | – | – |
+| Answer accuracy | rerun pending | **100%** (34/34) | **100%** (34/34) |
+| Citation correctness | rerun pending | 97% | 94% |
+| Refusal accuracy | rerun pending | 100% | 100% |
+| Retrieval recall@5 | 100% | 100% | 100% |
+| Cost per question | $0 | **$0.0009** | $0.0161 |
+| Cost for all 37 | $0 | $0.03 | $0.60 |
+| p95 latency | ~200 s | **4.9 s** | 9.4 s |
 
-Hybrid search, no reranker, local bge-small embeddings. Run on a MacBook with Ollama, Oct 26 2026.
-Narrative answers are graded on citations only until reference answers are written.
+Hybrid search, no reranker, local bge-small embeddings, Claude Haiku as citation judge for both Claude runs.
+Oct 31 2026. Narrative answers are graded on citations only.
 
-| Run | Answer accuracy | Change |
-| --- | --- | --- |
-| 1 | 92% (22/24) | baseline |
-| 2 | 100% (24/24) | clarified the `value` field in `final_answer` |
+**Decision: Haiku for everything.** On this set Sonnet costs 18x more and is twice as slow with no accuracy gain,
+so the recommended config sets both `CHEAP_MODEL` and `STRONG_MODEL` to Haiku. The router stays in place for
+question types where a future eval shows Haiku falling behind.
 
-Run 1 missed two growth questions: the answer text had the right percent (17.79%, 65.47%),
-but the structured `value` field held the revenue instead. The eval reads `value`, not the text,
-so it caught a schema bug a human skim would miss.
+**Reading the citation scores.** Haiku's one miss is real: for Microsoft's segments it named all three, but the
+cited passages only contained two, so it filled in the third from memory. Sonnet's two misses are judge errors:
+both answers were correct arithmetic on cited numbers, which the judge is told to accept.
 
-This set is small and mostly single-company lookups. 100% here means the basics work, not that
-the agent is done. Next: harder questions (multi-company comparisons, 3-year trends, 10-Q data).
+**Local model history**
+
+| Run | Questions | Answer accuracy | Change |
+| --- | --- | --- | --- |
+| 1 | 27 base | 92% (22/24) | baseline |
+| 2 | 27 base | 100% (24/24) | clarified the `value` field in `final_answer` |
+| 3 | 10 hard | 80% (8/10) | first hard set |
+| 4 | 3 failed | all pass | metric hint, newest-first values, "don't guess the year" |
 
 ## Stack
 
@@ -173,6 +180,21 @@ docs/deploy.md    AWS deployment
 - Page furniture leaked into chunks: Apple's footers ("Apple Inc. | 2025 Form 10-K | 11"), NVIDIA's "Table of Contents" links, page numbers, Microsoft's running "PART I / Item 1A" headers. Fixed with a line filter after section extraction (0 left across all three 10-Ks).
 - The local model sometimes replies in text instead of calling a tool; the agent nudges it and continues.
 - Citation check flagged a correct answer (Microsoft segments): the judge only saw the first 1,000 characters of each passage. Now it sees the full passage.
+
+- Hard questions, run 1: 80% (8/10). With no year given, the facts tool listed 5 years oldest-first and the
+  model answered "largest total assets" with Microsoft's FY2023 value. Fixed: newest first, plus `latest_fiscal_year`.
+  It also looped asking for a "gross margin" metric that doesn't exist. Fixed: the error now says which metrics to
+  fetch and to divide with the calculator. The local judge also marked a correct subtraction as unsupported.
+- The real cause of the "largest total assets" miss: asked for the *latest* year, the local model passed
+  `fiscal_year: 2023` itself, likely the newest year in its training data, despite today's date in the prompt.
+  Fixed: the tool tells the model to omit the year for "latest", and adds a note when an older year is requested.
+  After the fix the local model got it right, but wrote Apple's assets as "$359,241 billion" (the number is in
+  millions, so 1,000x off). `value` was correct, so accuracy passed; the citation judge caught the text.
+  Claude Haiku answered the same question correctly ("$359.2 billion") in 3.7 s for $0.0009.
+
+- Claude Sonnet 5.5 rejects forced tool use (`tool_choice` any/tool returns a 400). The client now detects that,
+  remembers the model, and switches to `auto` with the rule stated in the prompt. Fallback to a second model now
+  happens only on rate limits and outages, not on bad requests.
 
 ## License
 

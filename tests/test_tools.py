@@ -47,3 +47,20 @@ def test_errors_go_back_to_the_model(apple_facts):
     assert "error" in json.loads(ctx.run("nope", {}))
     assert "error" in json.loads(ctx.run("calculator", {"wrong_arg": 1}))
     assert [c["ok"] for c in ctx.calls] == [False, False, False]
+
+
+def test_latest_first_and_unknown_metric_hint(apple_facts):
+    ctx = ToolContext(sec=FakeSec(apple_facts), retriever=None)
+    out = json.loads(ctx.run("get_financial_data", {"company": "AAPL", "metric": "revenue"}))
+    assert out["latest_fiscal_year"] == 2024
+    assert [v["fiscal_year"] for v in out["values"]] == [2024, 2023]
+    bad = json.loads(ctx.run("get_financial_data", {"company": "AAPL", "metric": "gross_margin"}))
+    assert "gross_profit" in bad["error"] and "calculator" in bad["error"]
+
+
+def test_older_year_gets_a_latest_note(apple_facts):
+    ctx = ToolContext(sec=FakeSec(apple_facts), retriever=None)
+    out = json.loads(ctx.run("get_financial_data", {"company": "AAPL", "metric": "revenue", "fiscal_year": 2023}))
+    assert out["latest_fiscal_year"] == 2024 and "latest is 2024" in out["note"]
+    latest = json.loads(ctx.run("get_financial_data", {"company": "AAPL", "metric": "revenue", "fiscal_year": 2024}))
+    assert "note" not in latest

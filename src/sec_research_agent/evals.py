@@ -151,7 +151,8 @@ def run_evals(args: argparse.Namespace) -> int:
                      "found": result.found, "value": result.value,
                      "cost_usd": result.cost_usd, "latency_ms": result.latency_ms,
                      "model": result.model,
-                     "cited": [c.source_id for c in result.citations]}
+                     "cited": [c.source_id for c in result.citations],
+                     "tools": result.tool_calls}
         answerable = row["type"] != "unanswerable"
         rec["refusal_correct"] = result.found == answerable
 
@@ -188,8 +189,8 @@ def run_evals(args: argparse.Namespace) -> int:
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    (out / f"{stamp}-{mode}.json").write_text(json.dumps({"summary": summary, "records": records}, indent=2, default=str))
-    (out / f"{stamp}-{mode}.md").write_text(md + "\n")
+    (out / f"{stamp}-{mode}-{settings.cheap_model.replace(':', '_')}.json").write_text(json.dumps({"summary": summary, "records": records}, indent=2, default=str))
+    (out / f"{stamp}-{mode}-{settings.cheap_model.replace(':', '_')}.md").write_text(md + "\n")
 
     accuracy = summary["answer_accuracy"] or 0.0
     if accuracy < args.min_accuracy:

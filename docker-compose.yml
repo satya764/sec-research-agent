@@ -19,6 +19,7 @@ services:
     env_file: .env
     environment:
       DATABASE_URL: postgresql://postgres:postgres@db:5432/sec_agent
+      STATE_BACKEND: postgres
     ports:
       - "8000:8000"
     volumes:

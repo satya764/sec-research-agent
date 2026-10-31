@@ -22,7 +22,7 @@ def build_embedder(settings: Settings | None = None):
         return OpenAIEmbedder(settings.openai_api_key, settings.embedding_model, settings.embedding_dim)
     if settings.embedding_provider == "local":
         return LocalEmbedder(
-            settings.embedding_model, settings.embedding_dim, str(settings.cache_dir.parent / "models")
+            settings.embedding_model, settings.embedding_dim, str(settings.model_dir)
         )
     raise ValueError("EMBEDDING_PROVIDER must be 'local' or 'openai'")
 

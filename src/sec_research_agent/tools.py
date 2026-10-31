@@ -53,7 +53,10 @@ TOOL_SCHEMAS: list[dict[str, Any]] = [
                 "metric": {"type": "string", "enum": list(METRICS)},
                 "fiscal_year": {
                     "type": "integer",
-                    "description": "Omit to get the five most recent periods",
+                    "description": (
+                        "Only if the question names a year. For latest / most recent / current, "
+                        "omit it: the result lists the newest years first. Never guess the year."
+                    ),
                 },
                 "period": {"type": "string", "enum": ["annual", "quarterly"]},
             },
@@ -159,6 +162,13 @@ class ToolContext:
         return {"passages": passages, "note": note} if note else {"passages": passages}
 
     def _tool_get_financial_data(self, company, metric, fiscal_year=None, period="annual"):
+        if metric not in METRICS:
+            return {
+                "error": f"unknown metric '{metric}'. Use one of: {', '.join(METRICS)}. "
+                "For a margin or ratio, get each metric (e.g. gross_profit and revenue) "
+                "and divide with calculator."
+            }
+        note = None
         co = self.sec.lookup(company)
         series = extract_series(self.sec.company_facts(co.cik), metric, period)
         if not series:
@@ -169,13 +179,19 @@ class ToolContext:
                 years = sorted({p.fiscal_year for p in series})
                 return {"error": f"no {metric} for fiscal {fiscal_year}; available: {years}"}
             points = [point]
+            if fiscal_year < series[-1].fiscal_year:
+                note = f"Fiscal {fiscal_year} is not the latest year; the latest is {series[-1].fiscal_year}."
         else:
-            points = series[-5:]
-        return {
+            points = list(reversed(series[-5:]))  # newest first: small models read the top entry
+        result = {
             "company": co.name,
             "metric": METRICS[metric].label,
+            "latest_fiscal_year": series[-1].fiscal_year,
             "values": [self._register_fact(co, p) for p in points],
         }
+        if note:
+            result["note"] = note
+        return result
 
     def _register_fact(self, co: Company, p: FactPoint) -> dict[str, Any]:
         self._fact_counter += 1
