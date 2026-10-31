@@ -4,7 +4,7 @@ Ask a question about a public company. Get an answer built from its 10-K and 10-
 
 > Status: working end to end on Apple, Microsoft and NVIDIA 10-Ks, runs free on a laptop. Oct 2026 – Jan 2027.
 
-![Streamlit UI answering a gross margin question with sources, cost and latency](docs/ui.png)
+![Streamlit UI: Apple revenue growth with XBRL sources, cost and latency](docs/ui.png)
 
 ## What it does
 
