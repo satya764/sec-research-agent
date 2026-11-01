@@ -2,6 +2,9 @@
 
 Ask a question about a public company. Get an answer built from its 10-K and 10-Q filings, with every number and claim cited.
 
+SEC chatbots aren't new. This one is built around proving its answers: numbers come only from the SEC's XBRL data,
+every claim is checked against the passage it cites, and a hand-verified eval set decides which model runs it.
+
 > Status: working end to end on Apple, Microsoft and NVIDIA 10-Ks, runs free on a laptop. Oct 2026 – Jan 2027.
 
 ![Demo: asking for Apple revenue growth, answer with XBRL sources, cost and latency](docs/demo.gif)
