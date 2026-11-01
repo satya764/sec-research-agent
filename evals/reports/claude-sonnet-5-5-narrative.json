@@ -1,0 +1,109 @@
+{
+  "summary": {
+    "questions": 3,
+    "retrieval_recall_at_5": 1.0,
+    "retrieval_mrr": 1.0,
+    "answer_accuracy": 1.0,
+    "citation_correctness": 1.0,
+    "refusal_accuracy": 1.0,
+    "avg_cost_usd": 0.018808666666666668,
+    "p95_latency_ms": 7519,
+    "ungraded_by_judge": 0
+  },
+  "records": [
+    {
+      "id": "aapl-risk-suppliers",
+      "type": "narrative",
+      "answer": "In its fiscal 2025 10-K, Apple says a significant majority of its manufacturing is done by outsourcing partners, mainly in China mainland, India, Japan, South Korea, Taiwan and Vietnam. It relies on single-source partners in the U.S., Asia and Europe for many components. Partners mainly in Asia handle final assembly of substantially all hardware products. Apple says outsourcing lowers costs but reduces its direct control over production and distribution. That reduced control has at times hurt, and may again hurt, the cost, quality or quantity of products, and it limits Apple's flexibility to respond to changing conditions. Apple generally stays responsible to consumers for warranty service and product defects, even if partners reimburse some defect costs. Supplier code of conduct violations occur from time to time and can harm its business and reputation. Because it gets some components from single or limited sources, Apple faces significant supply and pricing risks. These include industry-wide shortages, such as past semiconductor shortages, and commodity price swings. Changing or adding to its supply chain takes considerable time and resources and brings regulatory and operational risks.",
+      "found": true,
+      "value": null,
+      "cost_usd": 0.019966,
+      "latency_ms": 7519,
+      "model": "claude-sonnet-5-5",
+      "cited": [
+        "C34",
+        "C35",
+        "C36"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "query": "dependence on outsourcing partners and single-source suppliers risks",
+            "company": "AAPL",
+            "form": "10-K",
+            "section": "risk_factors"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-segments",
+      "type": "narrative",
+      "answer": "In its latest 10-K (fiscal year 2026), Microsoft reports three segments. They are Productivity and Business Processes, Intelligent Cloud, and More Personal Computing. Productivity and Business Processes covers Microsoft 365 Commercial and Consumer, LinkedIn, and related products and services.",
+      "found": true,
+      "value": null,
+      "cost_usd": 0.017532,
+      "latency_ms": 4400,
+      "model": "claude-sonnet-5-5",
+      "cited": [
+        "C230",
+        "C109"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "query": "reportable segments",
+            "company": "MSFT",
+            "form": "10-K"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-mdna-datacenter",
+      "type": "narrative",
+      "answer": "In NVIDIA's fiscal 2026 10-K MD&A, Data Center revenue rose 68% year over year. The MD&A attributes this to the major platform shifts to accelerated computing and AI. Data Center computing grew 59% on demand for the Blackwell platform, and Blackwell made up most of Data Center revenue. Data Center networking grew 142%. That growth came from the introduction and ramp of NVLink compute fabric for GB200 and GB300 systems, plus growth in Ethernet and InfiniBand platforms.",
+      "found": true,
+      "value": null,
+      "cost_usd": 0.018928,
+      "latency_ms": 5551,
+      "model": "claude-sonnet-5-5",
+      "cited": [
+        "C431",
+        "C440",
+        "C425"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "company": "NVDA",
+            "query": "Data Center revenue increase drivers",
+            "section": "mdna",
+            "form": "10-K"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    }
+  ]
+}

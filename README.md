@@ -45,16 +45,21 @@ Every expected number was checked against the filing's financial statements.
 
 | Metric | Qwen3 8B, local | Claude Haiku 5.5 | Claude Sonnet 5.5 |
 | --- | --- | --- | --- |
-| Answer accuracy | rerun pending | **100%** (37/37) | **100%** (37/37) |
-| Citation correctness | rerun pending | 97% | 95% |
-| Refusal accuracy | rerun pending | 100% | 100% |
+| Answer accuracy | 97% (36/37) | **100%** (37/37) | **100%** (37/37) |
+| Citation correctness | 97% | 97% | 95% |
+| Refusal accuracy | 97%* | 100% | 100% |
 | Retrieval recall@5 | 100% | 100% | 100% |
 | Cost per question | $0 | **$0.0009** | $0.0163 |
 | Cost for all 37 | $0 | $0.03 | $0.60 |
-| p95 latency | ~200 s | **4.9 s** | 9.4 s |
+| p95 latency | 171 s | **4.9 s** | 9.4 s |
 
-Hybrid search, no reranker, local bge-small embeddings, Claude Haiku as citation judge for both Claude runs.
-Oct 31 2026. Narrative answers are graded by an LLM judge against reference answers written from the 10-K text.
+Hybrid search, no reranker, local bge-small embeddings. Oct 31 2026. Claude Haiku judges both Claude runs; the local
+model judges itself, so the local run stays free and offline. Narrative answers are graded against reference answers
+written from the 10-K text. Raw records for every run: [`evals/reports/`](evals/reports/).
+
+\* Qwen3 hit the 8-step limit on Microsoft's segments in the full run and answered "could not finish", which counts as
+a wrong refusal. It answered correctly on a rerun. Its one wrong answer: Apple's supplier risks, where it left out
+custom components and supply shortages.
 
 **Decision: Haiku for everything.** On this set Sonnet costs 18x more and is twice as slow with no accuracy gain,
 so the recommended config sets both `CHEAP_MODEL` and `STRONG_MODEL` to Haiku. The router stays in place for
@@ -62,7 +67,11 @@ question types where a future eval shows Haiku falling behind.
 
 **Reading the citation scores.** Haiku's one miss is real: for Microsoft's segments it named all three, but the
 cited passages only contained two, so it filled in the third from memory. Sonnet's two misses are judge errors:
-both answers were correct arithmetic on cited numbers, which the judge is told to accept.
+both answers were correct arithmetic on cited numbers, which the judge is told to accept. The local judge made the
+same mistake once, on a net income difference.
+
+**Local vs Claude.** The free local model is nearly as accurate (36/37) but takes minutes per question instead of
+seconds. Good for development and private data; Haiku for anything a user waits on.
 
 **Local model history**
 
@@ -146,7 +155,7 @@ uv run sec-agent eval --ids msft-revenue-growth-2026 # rerun specific rows
 uv run sec-agent eval --mode vector                  # compare retrieval modes: vector, hybrid, hybrid_rerank
 ```
 
-Only verified rows count. Results go to `evals/results/`. The Evals workflow runs on pull requests
+Only verified rows count. Results go to `evals/results/` (gitignored); the runs behind the Results table are in `evals/reports/`. The Evals workflow runs on pull requests
 when an `ANTHROPIC_API_KEY` repo secret is set, and fails below 80% accuracy.
 
 ## Project layout
@@ -171,7 +180,7 @@ src/sec_research_agent/
   evals.py        golden-set evals and candidate generation
   tracing.py      Phoenix tracing (optional)
 app/ui.py         Streamlit chat UI
-evals/            golden set and results
+evals/            golden set, question candidates, final eval reports
 docs/deploy.md    AWS deployment
 ```
 

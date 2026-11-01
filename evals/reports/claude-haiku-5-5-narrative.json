@@ -1,0 +1,107 @@
+{
+  "summary": {
+    "questions": 3,
+    "retrieval_recall_at_5": 1.0,
+    "retrieval_mrr": 1.0,
+    "answer_accuracy": 1.0,
+    "citation_correctness": 1.0,
+    "refusal_accuracy": 1.0,
+    "avg_cost_usd": 0.0009263333333333334,
+    "p95_latency_ms": 3849,
+    "ungraded_by_judge": 0
+  },
+  "records": [
+    {
+      "id": "aapl-risk-suppliers",
+      "type": "narrative",
+      "answer": "Apple's FY2025 10-K says it depends on outsourcing partners, mostly in China mainland, India, Japan, South Korea, Taiwan and Vietnam, for component manufacturing, final assembly of substantially all hardware, and logistics. It relies on single-source partners for many components and says this outsourcing reduces its direct control over production and distribution, which has adversely affected cost, quality or quantity at times. Apple also warns that it obtains some components from single or limited sources, so it faces supply shortages and pricing risk, including industry-wide semiconductor shortages, and that supplier failures, consolidation, or a lack of alternative sources could limit supply.",
+      "found": true,
+      "value": null,
+      "cost_usd": 0.000929,
+      "latency_ms": 3849,
+      "model": "claude-haiku-5-5",
+      "cited": [
+        "C34",
+        "C36",
+        "C37",
+        "C35"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "query": "outsourcing partners single-source suppliers risks",
+            "company": "AAPL",
+            "section": "risk_factors"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-segments",
+      "type": "narrative",
+      "answer": "Microsoft's latest 10-K (fiscal 2026) describes three reportable segments: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing.",
+      "found": true,
+      "value": null,
+      "cost_usd": 0.000914,
+      "latency_ms": 2968,
+      "model": "claude-haiku-5-5",
+      "cited": [
+        "C108",
+        "C109"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "query": "Microsoft reportable segments Productivity and Business Processes, Intelligent Cloud, More Personal Computing",
+            "form": "10-K",
+            "section": "business"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-mdna-datacenter",
+      "type": "narrative",
+      "answer": "According to NVIDIA's FY2026 MD&A, Data Center revenue was up 68% year over year, driven by the major platform shifts to accelerated computing and AI. Within Compute & Networking, Data Center compute grew 59% on demand for the Blackwell computing platform, and Data Center networking grew 142% from the introduction and ramp of NVLink compute fabric for GB200 and GB300 systems plus growth in Ethernet and InfiniBand.",
+      "found": true,
+      "value": null,
+      "cost_usd": 0.000936,
+      "latency_ms": 2853,
+      "model": "claude-haiku-5-5",
+      "cited": [
+        "C431",
+        "C440"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "query": "NVIDIA Data Center revenue increase drivers",
+            "section": "mdna",
+            "company": "NVDA"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    }
+  ]
+}

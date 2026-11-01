@@ -1,0 +1,109 @@
+{
+  "summary": {
+    "questions": 3,
+    "retrieval_recall_at_5": 1.0,
+    "retrieval_mrr": 1.0,
+    "answer_accuracy": 0.6666666666666666,
+    "citation_correctness": 1.0,
+    "refusal_accuracy": 1.0,
+    "avg_cost_usd": 0.0,
+    "p95_latency_ms": 157904,
+    "ungraded_by_judge": 0
+  },
+  "records": [
+    {
+      "id": "aapl-risk-suppliers",
+      "type": "narrative",
+      "answer": "Apple's 2025 10-K filing highlights risks from reliance on outsourcing partners and single-source suppliers, including reduced control over production, potential quality issues, and warranty liabilities. These dependencies also expose the company to supply chain disruptions, supplier code of conduct violations, and increased costs from trade restrictions. Sources: C34, C35.",
+      "found": true,
+      "value": 0.0,
+      "cost_usd": 0.0,
+      "latency_ms": 68993,
+      "model": "qwen3-16k",
+      "cited": [
+        "C34",
+        "C35"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "company": "Apple",
+            "form": "10-K",
+            "section": "risk_factors",
+            "query": "outsourcing partners and single-source suppliers"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": false,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-segments",
+      "type": "narrative",
+      "answer": "Microsoft describes three reportable segments in its 2026 10-K: Productivity and Business Processes, Intelligent Cloud, and More Personal Computing. These segments are detailed in Note 18 \u2013 Segment Information and Geographic Data of the Notes to Financial Statements.",
+      "found": true,
+      "value": 3.0,
+      "cost_usd": 0.0,
+      "latency_ms": 157904,
+      "model": "qwen3-16k",
+      "cited": [
+        "C109",
+        "C108"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "form": "10-K",
+            "section": "business",
+            "query": "reportable segments",
+            "company": "Microsoft"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-mdna-datacenter",
+      "type": "narrative",
+      "answer": "NVIDIA's Data Center revenue growth in fiscal year 2026 was driven by major platform shifts toward accelerated computing and AI, including strong demand for its Blackwell computing platform (59% growth) and the introduction of NVLink compute fabric for GB200 and GB300 systems (142% growth in networking). These factors are detailed in the MD&A section of NVIDIA's 10-K filing.",
+      "found": true,
+      "value": 215900000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 98652,
+      "model": "qwen3-16k",
+      "cited": [
+        "C440",
+        "C431",
+        "C430"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "company": "NVIDIA",
+            "form": "10-K",
+            "section": "mdna",
+            "query": "what drove the change in Data Center revenue"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "correct": true,
+      "citations_ok": true
+    }
+  ]
+}

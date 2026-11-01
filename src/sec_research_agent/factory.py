@@ -27,6 +27,14 @@ def build_embedder(settings: Settings | None = None):
     raise ValueError("EMBEDDING_PROVIDER must be 'local' or 'openai'")
 
 
+def effective_mode(settings: Settings, mode: str | None = None) -> str:
+    """The retrieval mode that actually runs: hybrid_rerank needs a Cohere key, else it is plain hybrid."""
+    mode = mode or settings.retrieval_mode
+    if mode == "hybrid_rerank" and not settings.cohere_api_key:
+        return "hybrid"
+    return mode
+
+
 def build_retriever(settings: Settings | None = None, mode: str | None = None):
     from .db import ChunkStore
     from .retrieval import CohereReranker, NoopReranker, Retriever
@@ -39,7 +47,7 @@ def build_retriever(settings: Settings | None = None, mode: str | None = None):
         if settings.cohere_api_key
         else NoopReranker()
     )
-    return Retriever(store, embedder, reranker, mode=mode or settings.retrieval_mode)
+    return Retriever(store, embedder, reranker, mode=effective_mode(settings, mode))
 
 
 def build_llm(settings: Settings | None = None):

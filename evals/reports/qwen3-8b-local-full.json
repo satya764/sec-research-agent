@@ -1,0 +1,1268 @@
+{
+  "summary": {
+    "questions": 37,
+    "retrieval_recall_at_5": 1.0,
+    "retrieval_mrr": 1.0,
+    "answer_accuracy": 1.0,
+    "citation_correctness": 0.967741935483871,
+    "refusal_accuracy": 0.972972972972973,
+    "avg_cost_usd": 0.0,
+    "p95_latency_ms": 171121,
+    "ungraded_by_judge": 1
+  },
+  "records": [
+    {
+      "id": "aapl-risk-suppliers",
+      "type": "narrative",
+      "answer": "Apple outlines risks related to outsourcing partners and single-source suppliers in its 2025 10-K filing. These include reduced control over production, supply shortages, quality issues, and pricing risks. Reliance on single-source suppliers and industry-wide shortages, such as semiconductor shortages, has historically disrupted supply chains, impacting operations and financials. The company also faces risks from logistics disruptions and potential unanticipated product defect liabilities.",
+      "found": true,
+      "value": 0.0,
+      "cost_usd": 0.0,
+      "latency_ms": 88221,
+      "model": "qwen3-16k",
+      "cited": [
+        "C34",
+        "C36",
+        "C35"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "form": "10-K",
+            "query": "risks from depending on outsourcing partners and single-source suppliers",
+            "section": "risk_factors",
+            "company": "Apple"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-segments",
+      "type": "narrative",
+      "answer": "I could not finish within the step limit.",
+      "found": false,
+      "value": null,
+      "cost_usd": 0.0,
+      "latency_ms": 171121,
+      "model": "qwen3-16k",
+      "cited": [],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "company": "MSFT",
+            "form": "10-K",
+            "section": "business",
+            "query": "reportable segments"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": false,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0
+    },
+    {
+      "id": "nvda-mdna-datacenter",
+      "type": "narrative",
+      "answer": "NVIDIA's Data Center revenue growth in fiscal year 2026 was driven by major platform shifts toward accelerated computing and AI, including demand for the Blackwell computing platform (59% growth) and the introduction/ramp of NVLink compute fabric for GB200 and GB300 systems (142% growth) alongside Ethernet and InfiniBand platform expansion. This is detailed in the MD&A section of NVIDIA's 2026 10-K.",
+      "found": true,
+      "value": 68.0,
+      "cost_usd": 0.0,
+      "latency_ms": 68787,
+      "model": "qwen3-16k",
+      "cited": [
+        "C430",
+        "C440",
+        "C431"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "company": "NVIDIA",
+            "form": "10-K",
+            "query": "change in Data Center revenue",
+            "section": "mdna"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "retrieval_hit": true,
+      "reciprocal_rank": 1.0,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-revenue-1985",
+      "type": "unanswerable",
+      "answer": "Apple's revenue for fiscal 1985 is not available in the filings. The earliest available revenue data is for fiscal 2007.",
+      "found": false,
+      "value": 0.0,
+      "cost_usd": 0.0,
+      "latency_ms": 54940,
+      "model": "qwen3-16k",
+      "cited": [],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "Apple",
+            "fiscal_year": 1985,
+            "metric": "revenue"
+          },
+          "ok": false
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true
+    },
+    {
+      "id": "aapl-ceo-address",
+      "type": "unanswerable",
+      "answer": "Not found in filings.",
+      "found": false,
+      "value": null,
+      "cost_usd": 0.0,
+      "latency_ms": 157319,
+      "model": "qwen3-16k",
+      "cited": [
+        "C16",
+        "C4",
+        "C14",
+        "C5",
+        "C2"
+      ],
+      "tools": [
+        {
+          "tool": "search_filings",
+          "input": {
+            "company": "Apple",
+            "form": "10-K",
+            "section": "business",
+            "query": "CEO home address"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true
+    },
+    {
+      "id": "msft-revenue-2030",
+      "type": "unanswerable",
+      "answer": "Not found in filings. The available data only includes historical financial information up to the latest fiscal year, and no future revenue projections for fiscal 2030 are provided.",
+      "found": false,
+      "value": 0.0,
+      "cost_usd": 0.0,
+      "latency_ms": 34292,
+      "model": "qwen3-16k",
+      "cited": [],
+      "tools": [],
+      "refusal_correct": true,
+      "correct": true
+    },
+    {
+      "id": "aapl-revenue-2024",
+      "type": "numeric",
+      "answer": "Apple Inc.'s revenue in fiscal 2024 was $391,035,000,000.",
+      "found": true,
+      "value": 391035000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 35038,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Apple Inc.",
+            "metric": "revenue",
+            "fiscal_year": 2024,
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-revenue-2025",
+      "type": "numeric",
+      "answer": "Apple Inc.'s revenue in fiscal 2025 was $416.16 billion (USD), reported on September 27, 2025, in the 10-K filing (source_id: F1).",
+      "found": true,
+      "value": 416161000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 114340,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2025,
+            "metric": "revenue",
+            "company": "Apple Inc."
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-revenue-growth-2025",
+      "type": "numeric",
+      "answer": "Apple Inc.'s revenue increased by 6.43% from fiscal 2024 to fiscal 2025.",
+      "found": true,
+      "value": 6.425511782832739,
+      "cost_usd": 0.0,
+      "latency_ms": 73342,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Apple Inc.",
+            "fiscal_year": 2024,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Apple Inc.",
+            "fiscal_year": 2025,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(416161000000 - 391035000000) / 391035000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-net_income-2024",
+      "type": "numeric",
+      "answer": "Apple Inc.'s net income for fiscal 2024 was $93.74 billion, reported in its 10-K filing (source_id: F1).",
+      "found": true,
+      "value": 93736000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 127898,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2024,
+            "metric": "net_income",
+            "period": "annual",
+            "company": "Apple Inc."
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-net_income-2025",
+      "type": "numeric",
+      "answer": "Apple Inc.'s net income in fiscal 2025 was $112.01 billion.",
+      "found": true,
+      "value": 112010000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 137099,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "Apple Inc.",
+            "fiscal_year": 2025,
+            "metric": "net_income"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-total_assets-2024",
+      "type": "numeric",
+      "answer": "Apple Inc.'s total assets in fiscal 2024 were $364.98 billion.",
+      "found": true,
+      "value": 364980000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 132490,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Apple Inc.",
+            "fiscal_year": 2024,
+            "metric": "total_assets",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-total_assets-2025",
+      "type": "numeric",
+      "answer": "Apple Inc.'s total assets in fiscal 2025 were $359.24 billion.",
+      "found": true,
+      "value": 359241000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 151157,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "metric": "total_assets",
+            "period": "annual",
+            "company": "Apple Inc.",
+            "fiscal_year": 2025
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-revenue-2025",
+      "type": "numeric",
+      "answer": "MICROSOFT CORP's revenue in fiscal 2025 was $281.724 billion.",
+      "found": true,
+      "value": 281724000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 119063,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "metric": "revenue",
+            "period": "annual",
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2025
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-revenue-2026",
+      "type": "numeric",
+      "answer": "MICROSOFT CORP's revenue in fiscal 2026 was $331,839 million.",
+      "found": true,
+      "value": 331839000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 34355,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2026,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-revenue-growth-2026",
+      "type": "numeric",
+      "answer": "Microsoft's revenue increased by 17.79% from fiscal 2025 to fiscal 2026.",
+      "found": true,
+      "value": 17.79,
+      "cost_usd": 0.0,
+      "latency_ms": 158648,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2025,
+            "period": "annual",
+            "company": "MICROSOFT CORP",
+            "metric": "revenue"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "MICROSOFT CORP",
+            "metric": "revenue",
+            "fiscal_year": 2026,
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(331839000000 - 281724000000) / 281724000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-net_income-2025",
+      "type": "numeric",
+      "answer": "MICROSOFT CORP's net income in fiscal 2025 was $101.832 billion.",
+      "found": true,
+      "value": 101832000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 118199,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2025,
+            "metric": "net_income",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-net_income-2026",
+      "type": "numeric",
+      "answer": "MICROSOFT CORP's net income in fiscal 2026 was $133.75 billion.",
+      "found": true,
+      "value": 133749000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 120143,
+      "model": "qwen3-16k",
+      "cited": [
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2026,
+            "metric": "net_income"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2026,
+            "metric": "net_income",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-total_assets-2025",
+      "type": "numeric",
+      "answer": "MICROSOFT CORP's total assets in fiscal 2025 were $619,003,000,000.",
+      "found": true,
+      "value": 619003000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 121546,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2025,
+            "metric": "total_assets"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-total_assets-2026",
+      "type": "numeric",
+      "answer": "MICROSOFT CORP's total assets in fiscal 2026 were $758.38 billion.",
+      "found": true,
+      "value": 758376000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 47483,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "MICROSOFT CORP",
+            "fiscal_year": 2026,
+            "metric": "total_assets",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-revenue-2025",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's revenue in fiscal 2025 was $130.5 billion.",
+      "found": true,
+      "value": 130497000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 111680,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA CORP",
+            "fiscal_year": 2025,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-revenue-2026",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's revenue in fiscal 2026 was $215,938,000,000.",
+      "found": true,
+      "value": 215938000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 115093,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA CORP",
+            "metric": "revenue",
+            "fiscal_year": 2026,
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-revenue-growth-2026",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's revenue increased by 65.47% from fiscal 2025 to fiscal 2026.",
+      "found": true,
+      "value": 65.47,
+      "cost_usd": 0.0,
+      "latency_ms": 146323,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2025,
+            "company": "NVDA",
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVDA",
+            "metric": "revenue",
+            "period": "annual",
+            "fiscal_year": 2026
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(215938000000 - 130497000000) / 130497000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-net_income-2025",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's net income in fiscal 2025 was $72.88 billion.",
+      "found": true,
+      "value": 72880000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 109307,
+      "model": "qwen3-16k",
+      "cited": [
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVDA",
+            "metric": "net_income",
+            "fiscal_year": 2025,
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2025,
+            "metric": "net_income",
+            "period": "annual",
+            "company": "NVDA"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-net_income-2026",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's net income in fiscal 2026 was $120.07 billion.",
+      "found": true,
+      "value": 120067000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 39785,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA CORP",
+            "fiscal_year": 2026,
+            "metric": "net_income",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-total_assets-2025",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's total assets in fiscal 2025 were $111.601 billion.",
+      "found": true,
+      "value": 111601000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 121591,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVDA",
+            "fiscal_year": 2025,
+            "metric": "total_assets",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-total_assets-2026",
+      "type": "numeric",
+      "answer": "NVIDIA CORP's total assets in fiscal 2026 were $206,803 million USD.",
+      "found": true,
+      "value": 206803000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 38377,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2026,
+            "metric": "total_assets",
+            "period": "annual",
+            "company": "NVDA"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "cmp-netincome-aapl-msft-2025",
+      "type": "numeric",
+      "answer": "Apple's fiscal 2025 net income exceeded Microsoft's by $10,178,000,000.",
+      "found": true,
+      "value": 10178000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 161899,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2025,
+            "metric": "net_income",
+            "period": "annual",
+            "company": "Apple"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Microsoft",
+            "fiscal_year": 2025,
+            "metric": "net_income",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "112010000000 - 101832000000"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": false
+    },
+    {
+      "id": "aapl-gross-margin-2025",
+      "type": "numeric",
+      "answer": "Apple's gross margin as a percent of revenue in fiscal 2025 was 46.91%.",
+      "found": true,
+      "value": 46.90516410716045,
+      "cost_usd": 0.0,
+      "latency_ms": 77064,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2025,
+            "metric": "revenue",
+            "period": "annual",
+            "company": "AAPL"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "AAPL",
+            "fiscal_year": 2025,
+            "metric": "gross_profit",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(195201000000 / 416161000000)*100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-gross-margin-2026",
+      "type": "numeric",
+      "answer": "NVIDIA's gross margin as a percent of revenue in fiscal 2026 was 71.07%.",
+      "found": true,
+      "value": 71.07,
+      "cost_usd": 0.0,
+      "latency_ms": 165454,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA",
+            "fiscal_year": 2026,
+            "metric": "gross_profit",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA",
+            "fiscal_year": 2026,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "153463000000 / 215938000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-operating-margin-2026",
+      "type": "numeric",
+      "answer": "Microsoft's operating margin in fiscal 2026 was 46.78%.\n\nOperating income of $155,237 million divided by revenue of $331,839 million yields 46.78%.",
+      "found": true,
+      "value": 46.780818408927225,
+      "cost_usd": 0.0,
+      "latency_ms": 73641,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Microsoft",
+            "fiscal_year": 2026,
+            "metric": "operating_income",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Microsoft",
+            "fiscal_year": 2026,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "155237000000 / 331839000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-net-margin-2026",
+      "type": "numeric",
+      "answer": "NVIDIA's net income as a percent of revenue in fiscal 2026 was 55.6%.",
+      "found": true,
+      "value": 55.6,
+      "cost_usd": 0.0,
+      "latency_ms": 52711,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "NVIDIA",
+            "fiscal_year": 2026,
+            "metric": "net_income"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "NVIDIA",
+            "fiscal_year": 2026,
+            "metric": "revenue"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "nvda-revenue-growth-2024-2026",
+      "type": "numeric",
+      "answer": "NVIDIA's revenue grew by 254.45% from fiscal 2024 ($60.92B) to fiscal 2026 ($215.94B).",
+      "found": true,
+      "value": 254.45,
+      "cost_usd": 0.0,
+      "latency_ms": 157607,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA",
+            "fiscal_year": 2024,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA",
+            "fiscal_year": 2026,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(215938000000 - 60922000000) / 60922000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "msft-rd-share-2026",
+      "type": "numeric",
+      "answer": "In Microsoft's fiscal 2026, 10.72% of revenue was allocated to research and development.",
+      "found": true,
+      "value": 10.716642709265638,
+      "cost_usd": 0.0,
+      "latency_ms": 165520,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Microsoft",
+            "fiscal_year": 2026,
+            "metric": "revenue",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2026,
+            "metric": "research_and_development",
+            "period": "annual",
+            "company": "Microsoft"
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(35562000000 / 331839000000) * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "aapl-netincome-growth-2025",
+      "type": "numeric",
+      "answer": "Apple's net income increased by 19.5% from fiscal 2024 to fiscal 2025.",
+      "found": true,
+      "value": 19.5,
+      "cost_usd": 0.0,
+      "latency_ms": 181231,
+      "model": "qwen3-16k",
+      "cited": [
+        "F1",
+        "F2"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "fiscal_year": 2024,
+            "company": "AAPL",
+            "metric": "net_income",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "AAPL",
+            "metric": "net_income",
+            "period": "annual",
+            "fiscal_year": 2025
+          },
+          "ok": true
+        },
+        {
+          "tool": "calculator",
+          "input": {
+            "expression": "(112010000000 - 93736000000) / 93736000000 * 100"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": true
+    },
+    {
+      "id": "cmp-largest-assets",
+      "type": "numeric",
+      "answer": "Microsoft had the largest total assets at the end of its latest fiscal year (2026) with $758,376,000,000. Apple had $359,241,000,000, and NVIDIA had $206,803,000,000.",
+      "found": true,
+      "value": 758376000000.0,
+      "cost_usd": 0.0,
+      "latency_ms": 130170,
+      "model": "qwen3-16k",
+      "cited": [
+        "F6",
+        "F1",
+        "F11"
+      ],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Apple",
+            "metric": "total_assets",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "Microsoft",
+            "metric": "total_assets",
+            "period": "annual"
+          },
+          "ok": true
+        },
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "company": "NVIDIA",
+            "metric": "total_assets",
+            "period": "annual"
+          },
+          "ok": true
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true,
+      "citations_ok": null,
+      "judge_failed": true
+    },
+    {
+      "id": "msft-revenue-2027",
+      "type": "unanswerable",
+      "answer": "Not found in filings. Microsoft's revenue data is available for fiscal years up to 2026.",
+      "found": false,
+      "value": 0.0,
+      "cost_usd": 0.0,
+      "latency_ms": 118616,
+      "model": "qwen3-16k",
+      "cited": [],
+      "tools": [
+        {
+          "tool": "get_financial_data",
+          "input": {
+            "period": "annual",
+            "company": "Microsoft",
+            "fiscal_year": 2027,
+            "metric": "revenue"
+          },
+          "ok": false
+        }
+      ],
+      "refusal_correct": true,
+      "correct": true
+    }
+  ]
+}

@@ -123,10 +123,10 @@ def to_markdown(summary: dict, mode: str) -> str:
 
 
 def run_evals(args: argparse.Namespace) -> int:
-    from .factory import build_agent, build_llm, build_retriever, build_sec
+    from .factory import build_agent, build_llm, build_retriever, build_sec, effective_mode
 
     settings = get_settings()
-    mode = args.mode or settings.retrieval_mode
+    mode = effective_mode(settings, args.mode)
     rows = load_golden(args.golden)
     if not args.include_unverified:
         rows = [r for r in rows if r.get("verified")]
