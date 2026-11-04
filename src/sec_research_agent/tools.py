@@ -181,6 +181,14 @@ class ToolContext:
             points = [point]
             if fiscal_year < series[-1].fiscal_year:
                 note = f"Fiscal {fiscal_year} is not the latest year; the latest is {series[-1].fiscal_year}."
+        elif fiscal_year is not None:
+            # Quarters are matched by the calendar year they end in, which can differ from the company's
+            # fiscal year (Microsoft's fiscal Q1 ends in September of the year before). Say so.
+            points = list(reversed([p for p in series if p.end.year == fiscal_year]))
+            if not points:
+                years = sorted({p.end.year for p in series})
+                return {"error": f"no quarterly {metric} ending in {fiscal_year}; available: {years}"}
+            note = f"Quarters ending in calendar {fiscal_year}. Check period_end for the exact quarter."
         else:
             points = list(reversed(series[-5:]))  # newest first: small models read the top entry
         result = {

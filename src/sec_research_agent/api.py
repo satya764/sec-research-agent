@@ -26,6 +26,8 @@ from .tracing import setup_tracing
 log = logging.getLogger("sec_research_agent.api")
 settings = get_settings()
 setup_tracing()
+if not settings.api_key:
+    log.warning("API_KEY is not set: /ask and /facts are open to anyone who can reach this server")
 
 app = FastAPI(title="SEC Filings Research Agent", version="0.1.0")
 app.add_middleware(
@@ -123,4 +125,9 @@ def facts(company: str, metric: str, sec=Depends(get_sec)) -> list[FactPoint]:
         co = sec.lookup(company)
     except CompanyNotFound as err:
         raise HTTPException(status_code=404, detail=str(err)) from err
-    return extract_series(sec.company_facts(co.cik), metric)
+    try:
+        facts = sec.company_facts(co.cik)
+    except Exception as err:
+        log.warning("SEC company facts failed for %s: %s", co.ticker, err)
+        raise HTTPException(status_code=502, detail="SEC EDGAR did not respond; try again shortly.") from err
+    return extract_series(facts, metric)

@@ -43,9 +43,17 @@ def cmd_ingest(args: argparse.Namespace) -> None:
     store.init_schema()
     embedder = build_embedder(s)
     sec = build_sec()
-    for company in args.companies:
-        n = ingest_company(company, sec, store, embedder, tuple(args.forms), args.limit, args.force)
+    failed = []
+    for company in args.companies:  # one bad ticker or a network error shouldn't stop the rest
+        try:
+            n = ingest_company(company, sec, store, embedder, tuple(args.forms), args.limit, args.force)
+        except Exception as err:
+            failed.append(company)
+            print(f"{company}: failed ({type(err).__name__}: {err})")
+            continue
         print(f"{company}: {n} chunks stored")
+    if failed:
+        sys.exit(f"Failed: {', '.join(failed)}")
 
 
 def cmd_stats(args: argparse.Namespace) -> None:

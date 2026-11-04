@@ -53,6 +53,7 @@ class SecClient:
         # The API answers requests on parallel threads that share this client, so the spacing
         # between SEC requests is guarded by a lock. (Each API worker process has its own client.)
         self._rate_lock = threading.Lock()
+        self._tickers_lock = threading.Lock()  # separate from _rate_lock, which _get takes itself
         self._tickers: dict[str, Company] | None = None
 
     # ---- HTTP -------------------------------------------------------------
@@ -109,19 +110,22 @@ class SecClient:
     # ---- Companies --------------------------------------------------------
 
     def tickers(self) -> dict[str, Company]:
-        if self._tickers is None:
-            raw = self._get_json(TICKERS_URL, "company_tickers.json", max_age=7 * DAY)
-            self._tickers = {
-                row["ticker"].upper(): Company(
-                    cik=str(row["cik_str"]).zfill(10), ticker=row["ticker"].upper(), name=row["title"]
-                )
-                for row in raw.values()
-            }
-        return self._tickers
+        with self._tickers_lock:  # first requests on parallel threads fetch the ticker map once
+            if self._tickers is None:
+                raw = self._get_json(TICKERS_URL, "company_tickers.json", max_age=7 * DAY)
+                self._tickers = {
+                    row["ticker"].upper(): Company(
+                        cik=str(row["cik_str"]).zfill(10), ticker=row["ticker"].upper(), name=row["title"]
+                    )
+                    for row in raw.values()
+                }
+            return self._tickers
 
     def lookup(self, query: str) -> Company:
         """Find a company by ticker, CIK, or name."""
         q = query.strip()
+        if not q:  # an empty name would match every company
+            raise CompanyNotFound("No company given")
         tickers = self.tickers()
         if q.upper() in tickers:
             return tickers[q.upper()]

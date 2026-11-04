@@ -50,6 +50,8 @@ def test_lookup_by_ticker_name_and_cik():
     assert sec.lookup("320193").ticker == "AAPL"
     with pytest.raises(CompanyNotFound):
         sec.lookup("not a company")
+    with pytest.raises(CompanyNotFound):
+        sec.lookup("  ")
     assert seen[0].headers["User-Agent"] == "Test Person test@example.com"
     assert len(seen) == 1  # ticker map fetched once
 

@@ -6,11 +6,13 @@ import re
 
 MAX_QUESTION_CHARS = 1000
 
+# Applied in this order. Cards go first, so a shorter pattern can't redact part of a card number
+# and leave the rest of its digits behind.
 PII_PATTERNS: dict[str, re.Pattern[str]] = {
     "email": re.compile(r"\b[\w.+-]+@[\w-]+\.[\w.-]+\b"),
+    "card": re.compile(r"\b(?:\d[ -]?){12,18}\d\b"),
     "ssn": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
     "phone": re.compile(r"(?<!\w)(?:\+?1[ .-]?)?(?:\(\d{3}\)|\d{3})[ .-]\d{3}[ .-]\d{4}\b"),
-    "card": re.compile(r"\b(?:\d[ -]?){12,18}\d\b"),
 }
 
 INJECTION_PATTERNS = [

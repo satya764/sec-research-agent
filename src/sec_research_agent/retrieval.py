@@ -5,6 +5,8 @@ from __future__ import annotations
 import time
 from typing import Literal, Protocol
 
+import httpx
+
 from .embeddings import Embedder
 from .models import Filters, SearchHit
 
@@ -30,8 +32,6 @@ class NoopReranker:
 
 class CohereReranker:
     def __init__(self, api_key: str, model: str = "rerank-v3.5"):
-        import httpx
-
         self._model = model
         self._http = httpx.Client(headers={"Authorization": f"Bearer {api_key}"}, timeout=30.0)
 
@@ -45,7 +45,13 @@ class CohereReranker:
             "top_n": min(top_n, len(hits)),
         }
         for attempt in range(3):
-            resp = self._http.post(COHERE_RERANK_URL, json=body)
+            try:
+                resp = self._http.post(COHERE_RERANK_URL, json=body)
+            except httpx.TransportError:  # timeouts and dropped connections, retried like a 503
+                if attempt < 2:
+                    time.sleep(2**attempt)
+                    continue
+                raise
             if resp.status_code in (429, 500, 502, 503) and attempt < 2:
                 time.sleep(2**attempt)
                 continue

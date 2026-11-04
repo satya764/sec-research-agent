@@ -1,3 +1,5 @@
+import pytest
+
 from sec_research_agent.chunking import chunk_text
 
 
@@ -24,3 +26,9 @@ def test_overlap_carries_context():
 
 def test_short_text_is_one_chunk():
     assert chunk_text("Hello world.") == ["Hello world."]
+
+
+@pytest.mark.parametrize("max_chars, overlap", [(0, -1), (-5, -10), (100, -1)])
+def test_rejects_sizes_that_would_loop_forever(max_chars, overlap):
+    with pytest.raises(ValueError):
+        chunk_text("some text", max_chars=max_chars, overlap=overlap)

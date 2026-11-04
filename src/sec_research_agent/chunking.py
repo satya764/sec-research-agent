@@ -29,6 +29,8 @@ def _split_long(paragraph: str, max_chars: int) -> list[str]:
 
 
 def chunk_text(text: str, max_chars: int = 1500, overlap: int = 200) -> list[str]:
+    if max_chars <= 0 or overlap < 0:
+        raise ValueError("max_chars must be positive and overlap not negative")
     if overlap >= max_chars:
         raise ValueError("overlap must be smaller than max_chars")
     paragraphs = [p.strip() for p in text.splitlines() if p.strip()]

@@ -54,11 +54,19 @@ class OpenAIEmbedder:
         return out
 
     def _embed_batch(self, batch: list[str]) -> list[list[float]]:
+        import httpx
+
         for attempt in range(4):
-            resp = self._http.post(
-                OPENAI_EMBEDDINGS_URL,
-                json={"model": self._model, "input": batch, "dimensions": self.dim},
-            )
+            try:
+                resp = self._http.post(
+                    OPENAI_EMBEDDINGS_URL,
+                    json={"model": self._model, "input": batch, "dimensions": self.dim},
+                )
+            except httpx.TransportError:  # timeouts and dropped connections, retried like a 503
+                if attempt < 3:
+                    time.sleep(2**attempt)
+                    continue
+                raise
             if resp.status_code in (429, 500, 502, 503) and attempt < 3:
                 time.sleep(2**attempt)
                 continue

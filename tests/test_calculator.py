@@ -17,7 +17,7 @@ def test_basic_math():
     "expr",
     [
         "__import__('os')", "open('x')", "1 / 0", "2 ** 100", "1,000 + 2", "a + 1", "x" * 400,
-        "max()", "abs(1, 2)", "1e308 * 10", "(-8) ** 0.5",
+        "max()", "abs(1, 2)", "1e308 * 10", "(-8) ** 0.5", "max(5)", "0 ** -1", "1e400",
     ],
 )
 def test_rejects_unsafe_or_invalid(expr):

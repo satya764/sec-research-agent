@@ -22,6 +22,10 @@ def setup_tracing() -> bool:
     except ImportError:
         log.warning("PHOENIX_COLLECTOR_ENDPOINT is set but tracing extras are missing: uv sync --extra tracing")
         return False
-    register(project_name="sec-research-agent", auto_instrument=True)
+    try:
+        register(project_name="sec-research-agent", auto_instrument=True)
+    except Exception as err:  # tracing is optional; never take the API or CLI down with it
+        log.warning("Phoenix tracing failed to start, continuing without it: %s", err)
+        return False
     _enabled = True
     return True

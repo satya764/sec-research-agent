@@ -173,6 +173,8 @@ def run_evals(args: argparse.Namespace) -> int:
             )
         elif row.get("expected_answer"):
             rec["correct"] = _graded(judge_answer, judge, settings.judge_model, row["question"], row["expected_answer"], result.answer)
+            if rec["correct"] is None:
+                rec["judge_failed"] = True
 
         if answerable and result.found:
             rec["citations_ok"] = _graded(judge_citations, judge, settings.judge_model, result)

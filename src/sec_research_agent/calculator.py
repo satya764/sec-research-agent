@@ -29,7 +29,10 @@ def _eval(node: ast.AST) -> float:
     if isinstance(node, ast.Constant) and type(node.value) in (int, float):
         # Floats, not Python ints: an int can grow without limit, so nested powers like
         # ((9**10)**10)**10... would run for minutes. A float overflows at once instead.
-        return float(node.value)
+        value = float(node.value)
+        if not math.isfinite(value):  # 1e400 parses as inf
+            raise CalculatorError("number too large")
+        return value
     if isinstance(node, ast.BinOp) and type(node.op) in BINARY:
         left, right = _eval(node.left), _eval(node.right)
         if isinstance(node.op, ast.Pow) and abs(right) > 10:
@@ -40,6 +43,8 @@ def _eval(node: ast.AST) -> float:
             result = BINARY[type(node.op)](left, right)
         except OverflowError:
             raise CalculatorError("result too large") from None
+        except ZeroDivisionError:  # 0 ** -1
+            raise CalculatorError("division by zero") from None
         if isinstance(result, complex):  # e.g. (-8) ** 0.5
             raise CalculatorError("result is not a real number")
         if not math.isfinite(result):
@@ -55,7 +60,12 @@ def _eval(node: ast.AST) -> float:
     ):
         args = [_eval(a) for a in node.args]
         name = node.func.id
-        if not args or (name == "round" and len(args) > 2) or (name == "abs" and len(args) != 1):
+        if (
+            not args
+            or (name == "round" and len(args) > 2)
+            or (name == "abs" and len(args) != 1)
+            or (name in ("min", "max") and len(args) < 2)
+        ):
             raise CalculatorError(f"wrong number of arguments for {name}")
         if name == "round" and len(args) == 2:
             args[1] = int(args[1])  # round() needs an int for the number of digits

@@ -64,3 +64,23 @@ def test_older_year_gets_a_latest_note(apple_facts):
     assert out["latest_fiscal_year"] == 2024 and "latest is 2024" in out["note"]
     latest = json.loads(ctx.run("get_financial_data", {"company": "AAPL", "metric": "revenue", "fiscal_year": 2024}))
     assert "note" not in latest
+
+
+def test_quarterly_with_a_year_filters_by_that_year():
+    def q(start, end, val):
+        return {"start": start, "end": end, "val": val, "form": "10-Q", "filed": end, "accn": "0000320193-25-000001"}
+
+    facts = {"facts": {"us-gaap": {"RevenueFromContractWithCustomerExcludingAssessedTax": {"units": {"USD": [
+        q("2023-07-02", "2023-09-30", 1), q("2024-03-31", "2024-06-29", 2),
+        q("2024-06-30", "2024-09-28", 3), q("2025-03-30", "2025-06-28", 4),
+    ]}}}}}
+    ctx = ToolContext(sec=FakeSec(facts), retriever=None)
+    out = json.loads(ctx.run("get_financial_data", {
+        "company": "AAPL", "metric": "revenue", "period": "quarterly", "fiscal_year": 2024,
+    }))
+    assert [v["value"] for v in out["values"]] == [3, 2]  # only 2024, newest first
+    assert "calendar 2024" in out["note"]
+    missing = json.loads(ctx.run("get_financial_data", {
+        "company": "AAPL", "metric": "revenue", "period": "quarterly", "fiscal_year": 2019,
+    }))
+    assert "error" in missing
