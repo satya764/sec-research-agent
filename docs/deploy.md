@@ -34,6 +34,11 @@ App Runner -> Create service -> Container registry (ECR) -> the image above.
 - Environment: `ANTHROPIC_API_KEY`, `SEC_USER_AGENT`, `DATABASE_URL`, optional `COHERE_API_KEY`
   (the cloud demo uses Claude; a local Ollama model would need a GPU server)
   (store keys in Secrets Manager and reference them)
+- Also set `STATE_BACKEND=postgres` (rate limits, cache and chat history shared by every worker and
+  instance; the default `memory` keeps them per process) and `API_KEY` (requires an `X-API-Key` header)
+- Set `FORWARDED_ALLOW_IPS=*`: App Runner is only reachable through its own proxy, so uvicorn can take the
+  client IP from `X-Forwarded-For`. Without it every user shares one rate limit. Don't use `*` on a
+  container that is reachable directly, since clients could then fake their IP.
 - Networking: give App Runner a VPC connector if RDS is private
 
 ## 4. UI

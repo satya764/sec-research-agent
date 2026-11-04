@@ -45,9 +45,16 @@ def test_ask_and_cache(client):
 
 def test_session_memory(client):
     c, agent = client
-    c.post("/ask", json={"question": "Apple revenue 2024?", "session_id": "s1"})
-    c.post("/ask", json={"question": "And 2023?", "session_id": "s1"})
+    sid = "a1b2c3d4e5f60718"
+    c.post("/ask", json={"question": "Apple revenue 2024?", "session_id": sid})
+    c.post("/ask", json={"question": "And 2023?", "session_id": sid})
     assert agent.calls[1][1] == [("Apple revenue 2024?", "answer 1")]
+
+
+def test_rejects_guessable_session_ids(client):
+    c, _ = client
+    assert c.post("/ask", json={"question": "Apple revenue 2024?", "session_id": "s1"}).status_code == 422
+    assert c.post("/ask", json={"question": "Apple revenue 2024?", "session_id": "x" * 16 + "!"}).status_code == 422
 
 
 def test_validation_and_rate_limit(client):

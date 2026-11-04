@@ -64,6 +64,22 @@ class Run:
     blocked: bool = False
 
 
+def _as_bool(value: Any) -> bool:
+    """Local models sometimes send booleans as text. bool("false") is True, so read the word."""
+    if isinstance(value, str):
+        return value.strip().lower() in ("true", "yes", "1")
+    return bool(value)
+
+
+def _as_list(value: Any) -> list[str]:
+    """Citations should be a list of source ids; a model may send one id as a plain string."""
+    if isinstance(value, str):
+        return [value]
+    if isinstance(value, list):
+        return [v for v in value if isinstance(v, str)]
+    return []
+
+
 class Agent:
     def __init__(
         self,
@@ -151,11 +167,11 @@ class Agent:
             "found": False,
             "citations": [],
         }
-        cited = [c for c in final.get("citations", []) if isinstance(c, str)]
+        cited = _as_list(final.get("citations"))
         return AskResult(
             question=run.question,
             answer=final.get("answer", ""),
-            found=bool(final.get("found", False)),
+            found=_as_bool(final.get("found", False)),
             value=final.get("value"),
             unit=final.get("unit"),
             citations=[run.ctx.sources[c] for c in cited if c in run.ctx.sources],

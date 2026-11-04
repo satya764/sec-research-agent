@@ -38,7 +38,9 @@ app.add_middleware(
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=3, max_length=1000)
-    session_id: str | None = Field(None, max_length=64)
+    # At least 16 random characters (the UI sends a random hex id), so one user can't guess another's id
+    # and read into their conversation.
+    session_id: str | None = Field(None, min_length=16, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")
 
 
 @app.middleware("http")

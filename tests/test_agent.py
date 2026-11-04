@@ -104,3 +104,14 @@ def test_text_reply_gets_a_nudge_then_continues(apple_facts):
     result = make_agent(llm, apple_facts).ask("What was Apple's revenue?")
     assert result.steps == 2
     assert llm.calls[-1]["messages"][-1]["content"].startswith("Use the tools")
+
+
+def test_found_and_citations_sent_as_text(apple_facts):
+    # Local models sometimes send "false" as a string, and one citation as a plain string.
+    llm = ScriptedLLM(
+        {"question_type": "lookup"},
+        [[tool_use("z", "final_answer", {"answer": "Not found in filings.", "found": "false", "citations": "F9"})]],
+    )
+    result = make_agent(llm, apple_facts).ask("What is Apple's favorite color?")
+    assert result.found is False
+    assert result.invalid_citations == ["F9"]

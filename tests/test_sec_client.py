@@ -1,3 +1,8 @@
+import json
+import threading
+import time
+from itertools import pairwise
+
 import pytest
 
 httpx = pytest.importorskip("httpx")
@@ -54,3 +59,28 @@ def test_list_filings():
     filings = sec.list_filings(sec.lookup("AAPL"), ("10-K",), limit=5)
     assert [f.fiscal_year for f in filings] == [2024, 2023]
     assert filings[0].url == "https://www.sec.gov/Archives/edgar/data/320193/000032019324000123/aapl-20240928.htm"
+
+
+def test_cache_writes_whole_files(tmp_path):
+    sec = SecClient("Test Person test@example.com", cache_dir=tmp_path, transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, json=TICKERS)), min_interval=0)
+    sec.tickers()
+    assert json.loads((tmp_path / "company_tickers.json").read_text()) == TICKERS
+    assert not list(tmp_path.glob("*.tmp"))  # no temp files left behind
+
+
+def test_requests_spaced_across_threads():
+    times = []
+
+    def handler(request):
+        times.append(time.monotonic())
+        return httpx.Response(200, json=TICKERS)
+
+    sec = SecClient("Test Person test@example.com", transport=httpx.MockTransport(handler), min_interval=0.05)
+    threads = [threading.Thread(target=sec._get, args=("https://www.sec.gov/x",)) for _ in range(6)]
+    for th in threads:
+        th.start()
+    for th in threads:
+        th.join()
+    gaps = [b - a for a, b in pairwise(sorted(times))]
+    assert min(gaps) >= 0.03  # without the lock, parallel requests land almost together

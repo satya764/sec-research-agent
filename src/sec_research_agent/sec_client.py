@@ -7,6 +7,9 @@ from __future__ import annotations
 
 import json
 import logging
+import os
+import tempfile
+import threading
 import time
 from datetime import date
 from pathlib import Path
@@ -47,16 +50,20 @@ class SecClient:
         self._cache_dir = cache_dir
         self._min_interval = min_interval
         self._last_request = 0.0
+        # The API answers requests on parallel threads that share this client, so the spacing
+        # between SEC requests is guarded by a lock. (Each API worker process has its own client.)
+        self._rate_lock = threading.Lock()
         self._tickers: dict[str, Company] | None = None
 
     # ---- HTTP -------------------------------------------------------------
 
     def _get(self, url: str) -> httpx.Response:
         for attempt in range(4):
-            wait = self._min_interval - (time.monotonic() - self._last_request)
-            if wait > 0:
-                time.sleep(wait)
-            self._last_request = time.monotonic()
+            with self._rate_lock:
+                wait = self._min_interval - (time.monotonic() - self._last_request)
+                if wait > 0:
+                    time.sleep(wait)
+                self._last_request = time.monotonic()
             resp = self._http.get(url)
             if resp.status_code in (429, 500, 502, 503, 504) and attempt < 3:
                 backoff = 2**attempt
@@ -82,7 +89,15 @@ class SecClient:
     def _store(self, name: str, text: str) -> None:
         path = self._cache_path(name)
         if path:
-            path.write_text(text)
+            # Write to a temp file, then rename: a reader on another thread never sees half a file.
+            fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{name}.", suffix=".tmp")
+            try:
+                with os.fdopen(fd, "w") as f:
+                    f.write(text)
+                os.replace(tmp, path)
+            except BaseException:
+                Path(tmp).unlink(missing_ok=True)
+                raise
 
     def _get_json(self, url: str, cache_name: str, max_age: float = DAY) -> dict:
         text = self._cached(cache_name, max_age)

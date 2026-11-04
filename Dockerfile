@@ -14,6 +14,11 @@ RUN uv run --no-sync python -c "from fastembed import TextEmbedding; TextEmbeddi
 RUN useradd --create-home app && mkdir -p /app/data && chown -R app /app/data
 USER app
 
+# Behind a load balancer, set FORWARDED_ALLOW_IPS to its address (or the subnet it runs in) so uvicorn
+# takes the client IP from X-Forwarded-For. Otherwise every request looks like the load balancer and
+# all users share one rate limit. Keep the default when the container is reached directly.
+ENV FORWARDED_ALLOW_IPS=127.0.0.1
+
 EXPOSE 8000
 HEALTHCHECK --interval=30s --timeout=5s CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
-CMD ["uv", "run", "--no-sync", "uvicorn", "sec_research_agent.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2"]
+CMD ["uv", "run", "--no-sync", "uvicorn", "sec_research_agent.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "2", "--proxy-headers"]
